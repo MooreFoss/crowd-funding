@@ -11,7 +11,7 @@ import {
   updateAdminExpenseEvidence,
 } from "@/src/application/admin";
 import { getExpenseDetail } from "@/src/application/public";
-import { createCosEvidenceStorage } from "@/src/infrastructure/storage";
+import { createMinioEvidenceStorage } from "@/src/infrastructure/storage";
 import { createExpenseRepository } from "@/src/infrastructure/persistence/repositories";
 
 const migrationsDirectory = fileURLToPath(
@@ -74,12 +74,13 @@ describe("expense evidence storage", () => {
     }
   });
 
-  it("creates signed COS upload targets with stable public asset URLs", () => {
-    const storage = createCosEvidenceStorage({
-      bucket: "bucket-1250000000",
-      region: "ap-beijing",
-      secretId: "secret-id",
-      secretKey: "secret-key",
+  it("creates signed MinIO upload targets with stable public asset URLs", () => {
+    const storage = createMinioEvidenceStorage({
+      endpoint: "https://minio.example.com",
+      bucket: "expense-assets",
+      region: "us-east-1",
+      accessKeyId: "minio-access",
+      secretAccessKey: "minio-secret",
       publicAssetBaseUrl: "https://assets.example.com",
       now: () => new Date("2026-05-10T12:00:00.000Z"),
     });
@@ -95,9 +96,16 @@ describe("expense evidence storage", () => {
     expect(target.objectKey).toContain("expense-evidence/test/2026/05/10/");
     expect(target.objectKey).toContain("receipt-image.png");
     expect(target.assetUrl).toContain("https://assets.example.com/expense-evidence/test/2026/05/10/");
-    expect(uploadUrl.host).toBe("bucket-1250000000.cos.ap-beijing.myqcloud.com");
-    expect(uploadUrl.searchParams.get("q-ak")).toBe("secret-id");
-    expect(uploadUrl.searchParams.get("q-sign-algorithm")).toBe("sha1");
+    expect(uploadUrl.origin).toBe("https://minio.example.com");
+    expect(uploadUrl.pathname).toContain("/expense-assets/expense-evidence/test/2026/05/10/");
+    expect(uploadUrl.searchParams.get("X-Amz-Algorithm")).toBe("AWS4-HMAC-SHA256");
+    expect(uploadUrl.searchParams.get("X-Amz-Credential")).toBe(
+      "minio-access/20260510/us-east-1/s3/aws4_request",
+    );
+    expect(uploadUrl.searchParams.get("X-Amz-Date")).toBe("20260510T120000Z");
+    expect(uploadUrl.searchParams.get("X-Amz-Expires")).toBe("600");
+    expect(uploadUrl.searchParams.get("X-Amz-SignedHeaders")).toBe("content-type;host");
+    expect(uploadUrl.searchParams.get("X-Amz-Signature")).toMatch(/^[a-f0-9]{64}$/);
     expect(target.headers).toEqual({
       "content-type": "image/png",
     });

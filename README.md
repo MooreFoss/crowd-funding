@@ -19,7 +19,7 @@ pnpm check
 
 ## Runtime
 
-Copy `.env.example` to `.env.local` and fill PostgreSQL, admin, ZPAY, Tencent TMS, and COS values. Apply SQL migrations from `src/infrastructure/persistence/migrations` in filename order before starting the app.
+Copy `.env.example` to `.env.local` and fill PostgreSQL, admin, ZPAY, Tencent TMS, and MinIO values. Apply SQL migrations from `src/infrastructure/persistence/migrations` in filename order before starting the app.
 
 The app stores authoritative finance data in PostgreSQL. Amounts are stored in fen, public values are derived from pledge/refund/expense records, and payment/refund callbacks are designed to be idempotent.
 

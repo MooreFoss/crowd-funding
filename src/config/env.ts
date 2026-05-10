@@ -55,17 +55,20 @@ export const serverEnv = {
   get tencentTmsEndpoint() {
     return process.env.TENCENT_TMS_ENDPOINT;
   },
-  get cosBucket() {
-    return readRequiredStringEnv("COS_BUCKET");
+  get minioEndpoint() {
+    return readRequiredUrlEnv("MINIO_ENDPOINT");
   },
-  get cosRegion() {
-    return readRequiredStringEnv("COS_REGION");
+  get minioBucket() {
+    return readRequiredStringEnv("MINIO_BUCKET");
   },
-  get cosSecretId() {
-    return readRequiredStringEnv("COS_SECRET_ID");
+  get minioRegion() {
+    return readRequiredStringEnv("MINIO_REGION");
   },
-  get cosSecretKey() {
-    return readRequiredStringEnv("COS_SECRET_KEY");
+  get minioAccessKeyId() {
+    return readRequiredStringEnv("MINIO_ACCESS_KEY_ID");
+  },
+  get minioSecretAccessKey() {
+    return readRequiredStringEnv("MINIO_SECRET_ACCESS_KEY");
   },
   get publicAssetBaseUrl() {
     return readRequiredUrlEnv("PUBLIC_ASSET_BASE_URL");

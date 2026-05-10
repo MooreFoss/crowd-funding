@@ -7,7 +7,7 @@ import type {
 } from "@/src/domain/expenses";
 import { logAuditEvent } from "@/src/infrastructure/audit";
 import type { EvidenceUploadTargetInput } from "@/src/infrastructure/storage";
-import { createConfiguredCosEvidenceStorage } from "@/src/infrastructure/storage";
+import { createConfiguredMinioEvidenceStorage } from "@/src/infrastructure/storage";
 import type { DatabaseExecutor } from "@/src/infrastructure/persistence/client";
 import { queryDatabase } from "@/src/infrastructure/persistence/client";
 import { createExpenseRepository } from "@/src/infrastructure/persistence/repositories";
@@ -321,5 +321,5 @@ export async function updateAdminExpenseEvidence(
 export function createExpenseEvidenceUploadTarget(
   input: EvidenceUploadTargetInput,
 ) {
-  return createConfiguredCosEvidenceStorage().createUploadTarget(input);
+  return createConfiguredMinioEvidenceStorage().createUploadTarget(input);
 }
