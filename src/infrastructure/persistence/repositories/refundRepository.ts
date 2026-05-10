@@ -137,6 +137,16 @@ export function createRefundRepository(
       return rows.map(mapRefundRow);
     },
 
+    async listAll() {
+      const { rows } = await executor.query<RefundRow>(
+        `SELECT *
+         FROM refunds
+         ORDER BY created_at DESC`,
+      );
+
+      return rows.map(mapRefundRow);
+    },
+
     async markStatus(input: MarkRefundStatusInput) {
       const current = await this.findByMerchantRefundNo(input.merchantRefundNo);
 

@@ -69,6 +69,7 @@ function withSchemaSearchPath(databaseUrl, schema) {
 
 function createPlaywrightZpayStubServer() {
   const orders = new Map();
+  const refunds = new Map();
   const host = "127.0.0.1";
   const port = 3100;
 
@@ -116,6 +117,32 @@ function createPlaywrightZpayStubServer() {
     }
 
     if (request.method === "GET" && url.pathname === "/api.php") {
+      if (url.searchParams.get("act") === "refund") {
+        const merchantRefundNo = url.searchParams.get("refund_no");
+        const merchantOrderNo = url.searchParams.get("out_trade_no");
+
+        if (merchantRefundNo) {
+          refunds.set(merchantRefundNo, {
+            merchantOrderNo,
+            providerRefundNo: `ZPAY-REFUND-${merchantRefundNo}`,
+          });
+        }
+
+        response.writeHead(200, {
+          "content-type": "application/json",
+        });
+        response.end(
+          JSON.stringify({
+            code: 1,
+            msg: "success",
+            refund_no: merchantRefundNo
+              ? `ZPAY-REFUND-${merchantRefundNo}`
+              : null,
+          }),
+        );
+        return;
+      }
+
       const merchantOrderNo = url.searchParams.get("out_trade_no");
       const order = merchantOrderNo ? orders.get(merchantOrderNo) : null;
 

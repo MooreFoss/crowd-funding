@@ -13,6 +13,11 @@ const playwrightZpayReturnUrl =
 const playwrightZpayMerchantId =
   process.env.ZPAY_MCH_ID ?? "test-zpay-merchant";
 const playwrightZpayKey = process.env.ZPAY_KEY ?? "test-zpay-key";
+const playwrightAdminUsername = process.env.ADMIN_USERNAME ?? "test-admin";
+const playwrightAdminPasswordHash =
+  process.env.ADMIN_PASSWORD_HASH ?? "test-password";
+const playwrightSessionSecret =
+  process.env.SESSION_SECRET ?? "test-session-secret";
 const playwrightTencentSecretId =
   process.env.TENCENT_SECRET_ID ?? "test-tencent-secret-id";
 const playwrightTencentSecretKey =
@@ -29,6 +34,9 @@ process.env.ZPAY_NOTIFY_URL = playwrightZpayNotifyUrl;
 process.env.ZPAY_RETURN_URL = playwrightZpayReturnUrl;
 process.env.ZPAY_MCH_ID = playwrightZpayMerchantId;
 process.env.ZPAY_KEY = playwrightZpayKey;
+process.env.ADMIN_USERNAME = playwrightAdminUsername;
+process.env.ADMIN_PASSWORD_HASH = playwrightAdminPasswordHash;
+process.env.SESSION_SECRET = playwrightSessionSecret;
 process.env.TENCENT_SECRET_ID = playwrightTencentSecretId;
 process.env.TENCENT_SECRET_KEY = playwrightTencentSecretKey;
 process.env.TENCENT_TMS_REGION = playwrightTencentTmsRegion;
@@ -55,6 +63,9 @@ export default defineConfig({
       ZPAY_RETURN_URL: playwrightZpayReturnUrl,
       ZPAY_MCH_ID: playwrightZpayMerchantId,
       ZPAY_KEY: playwrightZpayKey,
+      ADMIN_USERNAME: playwrightAdminUsername,
+      ADMIN_PASSWORD_HASH: playwrightAdminPasswordHash,
+      SESSION_SECRET: playwrightSessionSecret,
       TENCENT_SECRET_ID: playwrightTencentSecretId,
       TENCENT_SECRET_KEY: playwrightTencentSecretKey,
       TENCENT_TMS_REGION: playwrightTencentTmsRegion,

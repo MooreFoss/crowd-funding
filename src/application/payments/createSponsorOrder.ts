@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 
+import type { CampaignStateRepository } from "@/src/domain/funding";
+import { isCampaignAcceptingSponsors } from "@/src/domain/funding";
 import type { TermsRepository } from "@/src/domain/terms";
 import type {
   ModerationReviewRepository,
@@ -11,6 +13,7 @@ import { createConfiguredTencentTmsModerator, type TextModerator } from "@/src/i
 import type { DatabaseExecutor } from "@/src/infrastructure/persistence/client";
 import { queryDatabase } from "@/src/infrastructure/persistence/client";
 import {
+  createCampaignStateRepository,
   createModerationReviewRepository,
   createPledgeRepository,
   createTermsRepository,
@@ -38,6 +41,7 @@ export type PaymentGateway = {
 };
 
 type PaymentRepositoriesInput = {
+  campaignState?: CampaignStateRepository;
   executor?: DatabaseExecutor;
   moderationReviews?: ModerationReviewRepository;
   pledges?: PledgeRepository;
@@ -66,6 +70,8 @@ function resolvePaymentRepositories(input?: PaymentRepositoriesInput) {
   };
 
   return {
+    campaignState:
+      input?.campaignState ?? createCampaignStateRepository(executor),
     moderationReviews:
       input?.moderationReviews ?? createModerationReviewRepository(executor),
     pledges: input?.pledges ?? createPledgeRepository(executor),
@@ -93,9 +99,14 @@ export async function createSponsorOrder(
     ...input,
     userAgent: input.userAgent ?? "",
   });
-  const { moderationReviews, pledges, terms } = resolvePaymentRepositories(
-    options.repositories,
-  );
+  const { campaignState, moderationReviews, pledges, terms } =
+    resolvePaymentRepositories(options.repositories);
+  const currentCampaign = await campaignState.findCurrent();
+
+  if (!isCampaignAcceptingSponsors(currentCampaign)) {
+    throw new Error("众筹已结束，当前不能创建新的赞助订单。");
+  }
+
   const activeTerms = await terms.findActive();
 
   if (!activeTerms) {

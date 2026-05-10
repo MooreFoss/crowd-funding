@@ -22,6 +22,13 @@ export type ZpayCreateOrderInput = {
   productName: string;
 };
 
+export type ZpayCreateRefundInput = {
+  merchantOrderNo: string;
+  merchantRefundNo: string;
+  amountFen: number;
+  reason: string;
+};
+
 export type ZpayNotificationPayload = Record<string, string>;
 
 function formatFenToPaymentAmount(amountFen: number) {
@@ -148,6 +155,36 @@ export function createZpayGateway(config: ZpayGatewayConfig) {
       return {
         providerOrderNo: body.trade_no ?? null,
         paid: String(body.status) === "1",
+      };
+    },
+
+    async createRefund(input: ZpayCreateRefundInput) {
+      const query = new URL(orderQueryEndpoint);
+      query.searchParams.set("act", "refund");
+      query.searchParams.set("pid", config.merchantId);
+      query.searchParams.set("key", config.key);
+      query.searchParams.set("out_trade_no", input.merchantOrderNo);
+      query.searchParams.set("refund_no", input.merchantRefundNo);
+      query.searchParams.set("money", formatFenToPaymentAmount(input.amountFen));
+      query.searchParams.set("reason", input.reason);
+
+      const response = await fetchImplementation(query, {
+        method: "GET",
+      });
+      const body = await response.json() as {
+        code?: number;
+        msg?: string;
+        trade_no?: string;
+        refund_no?: string;
+      };
+
+      if (!response.ok || body.code !== 1) {
+        throw new Error(body.msg ?? "ZPAY refund request failed.");
+      }
+
+      return {
+        providerRefundNo: body.refund_no ?? body.trade_no ?? null,
+        accepted: true,
       };
     },
 

@@ -1,4 +1,5 @@
 import { getActiveTermsVersion } from "@/src/application/admin";
+import { getSummary } from "@/src/application/public";
 
 export const dynamic = "force-dynamic";
 
@@ -7,10 +8,14 @@ export default async function SponsorPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const activeTerms = await getActiveTermsVersion();
+  const [activeTerms, summary] = await Promise.all([
+    getActiveTermsVersion(),
+    getSummary(),
+  ]);
   const resolvedSearchParams = await searchParams;
   const errorParam = resolvedSearchParams.error;
   const error = typeof errorParam === "string" ? errorParam : null;
+  const sponsorshipClosed = !summary.canSponsor;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
@@ -24,6 +29,12 @@ export default async function SponsorPage({
       {error ? (
         <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      ) : null}
+
+      {sponsorshipClosed ? (
+        <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          众筹已结束，当前不能创建新的赞助订单。
         </div>
       ) : null}
 
@@ -102,9 +113,10 @@ export default async function SponsorPage({
 
         <button
           type="submit"
+          disabled={sponsorshipClosed}
           className="flex w-full items-center justify-center rounded-full bg-blue-600 px-8 py-4 text-lg font-bold text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-95"
         >
-          确认并去支付
+          {sponsorshipClosed ? "众筹已结束" : "确认并去支付"}
         </button>
 
         <div className="flex items-center justify-center gap-4 border-t border-slate-100 pt-6">

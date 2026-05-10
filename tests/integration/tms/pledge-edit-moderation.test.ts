@@ -13,6 +13,7 @@ import {
 import { reviewEditedPledgeText } from "@/src/application/admin";
 import type { TextModerator } from "@/src/infrastructure/moderation";
 import {
+  createCampaignStateRepository,
   createModerationReviewRepository,
   createPledgeRepository,
   createTermsRepository,
@@ -50,6 +51,7 @@ async function createTestContext() {
     schemaName,
     pool,
     client,
+    campaignState: createCampaignStateRepository(client),
     moderationReviews: createModerationReviewRepository(client),
     pledges: createPledgeRepository(client),
     terms: createTermsRepository(client),
@@ -148,6 +150,7 @@ describe("pledge text moderation integration", () => {
         },
         {
           repositories: {
+            campaignState: context.campaignState,
             moderationReviews: context.moderationReviews,
             pledges: context.pledges,
             terms: context.terms,

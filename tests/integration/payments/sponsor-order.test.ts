@@ -12,6 +12,7 @@ import {
   type PaymentGateway,
 } from "@/src/application/payments";
 import {
+  createCampaignStateRepository,
   createModerationReviewRepository,
   createPledgeRepository,
   createTermsRepository,
@@ -50,6 +51,7 @@ async function createTestContext() {
     schemaName,
     pool,
     client,
+    campaignState: createCampaignStateRepository(client),
     moderationReviews: createModerationReviewRepository(client),
     pledges: createPledgeRepository(client),
     terms: createTermsRepository(client),
@@ -135,6 +137,7 @@ describe("sponsor-order flow", () => {
       },
       {
         repositories: {
+          campaignState: context.campaignState,
           moderationReviews: context.moderationReviews,
           pledges: context.pledges,
           terms: context.terms,
@@ -188,6 +191,7 @@ describe("sponsor-order flow", () => {
         },
         {
           repositories: {
+            campaignState: context.campaignState,
             pledges: context.pledges,
             terms: context.terms,
           },
@@ -242,6 +246,7 @@ describe("sponsor-order flow", () => {
       },
       {
         repositories: {
+          campaignState: context.campaignState,
           moderationReviews: context.moderationReviews,
           pledges: context.pledges,
           terms: context.terms,

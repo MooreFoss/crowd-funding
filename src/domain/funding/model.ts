@@ -16,6 +16,8 @@ export type CampaignCloseSnapshot = {
   snapshotId: string;
   capturedAt: string;
   totalEligibleNetFen: number;
+  totalExpenseFen?: number;
+  refundableBalanceFen?: number;
   pledges: CloseoutSnapshotPledge[];
 };
 

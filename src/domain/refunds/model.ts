@@ -50,6 +50,7 @@ export interface RefundRepository {
   ): Promise<RefundRecord | null>;
   listByPledgeId(pledgeId: string): Promise<RefundRecord[]>;
   listByBatchNo(batchNo: string): Promise<RefundRecord[]>;
+  listAll(): Promise<RefundRecord[]>;
   markStatus(input: MarkRefundStatusInput): Promise<RefundRecord>;
   sumSuccessfulRefundsForPledge(pledgeId: string): Promise<number>;
 }
