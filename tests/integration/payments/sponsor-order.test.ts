@@ -12,9 +12,11 @@ import {
   type PaymentGateway,
 } from "@/src/application/payments";
 import {
+  createModerationReviewRepository,
   createPledgeRepository,
   createTermsRepository,
 } from "@/src/infrastructure/persistence/repositories";
+import type { TextModerator } from "@/src/infrastructure/moderation";
 
 const migrationsDirectory = fileURLToPath(
   new URL("../../../src/infrastructure/persistence/migrations", import.meta.url),
@@ -48,6 +50,7 @@ async function createTestContext() {
     schemaName,
     pool,
     client,
+    moderationReviews: createModerationReviewRepository(client),
     pledges: createPledgeRepository(client),
     terms: createTermsRepository(client),
   };
@@ -62,6 +65,18 @@ async function destroyTestContext(context: TestContext) {
     await context.pool.end();
   }
 }
+
+const approvingModerator: TextModerator = {
+  async moderateText(input) {
+    return {
+      status: "APPROVED",
+      requestId: `req-${input.dataId}`,
+      failureSummary: null,
+      reviewedAt: new Date("2026-05-10T10:30:00.000Z"),
+      retryCount: 0,
+    };
+  },
+};
 
 describe("sponsor-order flow", () => {
   let context: TestContext | undefined;
@@ -120,10 +135,12 @@ describe("sponsor-order flow", () => {
       },
       {
         repositories: {
+          moderationReviews: context.moderationReviews,
           pledges: context.pledges,
           terms: context.terms,
         },
         gateway,
+        moderator: approvingModerator,
       },
     );
 
@@ -225,10 +242,12 @@ describe("sponsor-order flow", () => {
       },
       {
         repositories: {
+          moderationReviews: context.moderationReviews,
           pledges: context.pledges,
           terms: context.terms,
         },
         gateway,
+        moderator: approvingModerator,
       },
     );
 

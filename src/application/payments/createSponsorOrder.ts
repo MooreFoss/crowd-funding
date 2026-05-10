@@ -1,10 +1,17 @@
 import { randomUUID } from "node:crypto";
 
 import type { TermsRepository } from "@/src/domain/terms";
-import type { PledgeRepository, PledgeStatus } from "@/src/domain/pledges";
+import type {
+  ModerationReviewRepository,
+  PledgeRepository,
+  PledgeStatus,
+} from "@/src/domain/pledges";
+import { moderateSponsorText } from "@/src/application/public";
+import { createConfiguredTencentTmsModerator, type TextModerator } from "@/src/infrastructure/moderation";
 import type { DatabaseExecutor } from "@/src/infrastructure/persistence/client";
 import { queryDatabase } from "@/src/infrastructure/persistence/client";
 import {
+  createModerationReviewRepository,
   createPledgeRepository,
   createTermsRepository,
 } from "@/src/infrastructure/persistence/repositories";
@@ -32,6 +39,7 @@ export type PaymentGateway = {
 
 type PaymentRepositoriesInput = {
   executor?: DatabaseExecutor;
+  moderationReviews?: ModerationReviewRepository;
   pledges?: PledgeRepository;
   terms?: TermsRepository;
 };
@@ -48,6 +56,7 @@ export type SponsorOrderResult = {
 type CreateSponsorOrderOptions = {
   repositories?: PaymentRepositoriesInput;
   gateway: PaymentGateway;
+  moderator?: TextModerator;
   merchantOrderNoFactory?: () => string;
 };
 
@@ -57,6 +66,8 @@ function resolvePaymentRepositories(input?: PaymentRepositoriesInput) {
   };
 
   return {
+    moderationReviews:
+      input?.moderationReviews ?? createModerationReviewRepository(executor),
     pledges: input?.pledges ?? createPledgeRepository(executor),
     terms: input?.terms ?? createTermsRepository(executor),
   };
@@ -82,7 +93,9 @@ export async function createSponsorOrder(
     ...input,
     userAgent: input.userAgent ?? "",
   });
-  const { pledges, terms } = resolvePaymentRepositories(options.repositories);
+  const { moderationReviews, pledges, terms } = resolvePaymentRepositories(
+    options.repositories,
+  );
   const activeTerms = await terms.findActive();
 
   if (!activeTerms) {
@@ -92,19 +105,45 @@ export async function createSponsorOrder(
   const merchantOrderNo =
     options.merchantOrderNoFactory?.() ?? createMerchantOrderNo();
 
-  await pledges.createPending({
+  const pendingOrder = await pledges.createPending({
     merchantOrderNo,
     paymentChannel: "ZPAY_WECHAT_H5",
     userKey: submission.userKey,
     submittedName: submission.displayName,
-    publicName: submission.publicDisplayName,
+    publicName: null,
     submittedMessage: submission.message,
-    publicMessage: submission.message,
+    publicMessage: null,
     amountFen: submission.amountFen,
     paymentRedirectUrl: null,
     termsVersionId: activeTerms.id,
     termsAcceptedAt: new Date(),
   });
+
+  try {
+    await moderateSponsorText(
+      {
+        pledgeId: pendingOrder.id,
+        publicDisplayName: submission.publicDisplayName,
+        publicMessage: submission.message,
+        userKey: submission.userKey,
+      },
+      {
+        moderator: options.moderator ?? createConfiguredTencentTmsModerator(),
+        repositories: {
+          moderationReviews,
+          pledges,
+        },
+      },
+    );
+  } catch (error) {
+    await pledges.markPaymentOutcome({
+      merchantOrderNo,
+      providerOrderNo: null,
+      status: "FAILED",
+      failedAt: new Date(),
+    });
+    throw error;
+  }
 
   try {
     const payment = await options.gateway.createH5Payment({

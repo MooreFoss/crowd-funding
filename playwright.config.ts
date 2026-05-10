@@ -13,6 +13,14 @@ const playwrightZpayReturnUrl =
 const playwrightZpayMerchantId =
   process.env.ZPAY_MCH_ID ?? "test-zpay-merchant";
 const playwrightZpayKey = process.env.ZPAY_KEY ?? "test-zpay-key";
+const playwrightTencentSecretId =
+  process.env.TENCENT_SECRET_ID ?? "test-tencent-secret-id";
+const playwrightTencentSecretKey =
+  process.env.TENCENT_SECRET_KEY ?? "test-tencent-secret-key";
+const playwrightTencentTmsRegion =
+  process.env.TENCENT_TMS_REGION ?? "ap-beijing";
+const playwrightTencentTmsEndpoint =
+  process.env.TENCENT_TMS_ENDPOINT ?? "http://127.0.0.1:3200";
 
 process.env.PLAYWRIGHT_DATABASE_SCHEMA = playwrightDatabaseSchema;
 process.env.ZPAY_CREATE_ENDPOINT = playwrightZpayCreateEndpoint;
@@ -21,6 +29,10 @@ process.env.ZPAY_NOTIFY_URL = playwrightZpayNotifyUrl;
 process.env.ZPAY_RETURN_URL = playwrightZpayReturnUrl;
 process.env.ZPAY_MCH_ID = playwrightZpayMerchantId;
 process.env.ZPAY_KEY = playwrightZpayKey;
+process.env.TENCENT_SECRET_ID = playwrightTencentSecretId;
+process.env.TENCENT_SECRET_KEY = playwrightTencentSecretKey;
+process.env.TENCENT_TMS_REGION = playwrightTencentTmsRegion;
+process.env.TENCENT_TMS_ENDPOINT = playwrightTencentTmsEndpoint;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -43,6 +55,10 @@ export default defineConfig({
       ZPAY_RETURN_URL: playwrightZpayReturnUrl,
       ZPAY_MCH_ID: playwrightZpayMerchantId,
       ZPAY_KEY: playwrightZpayKey,
+      TENCENT_SECRET_ID: playwrightTencentSecretId,
+      TENCENT_SECRET_KEY: playwrightTencentSecretKey,
+      TENCENT_TMS_REGION: playwrightTencentTmsRegion,
+      TENCENT_TMS_ENDPOINT: playwrightTencentTmsEndpoint,
     },
     url: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000",
     reuseExistingServer: false,

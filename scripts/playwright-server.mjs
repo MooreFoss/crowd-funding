@@ -175,6 +175,52 @@ function createPlaywrightZpayStubServer() {
   });
 }
 
+function createPlaywrightTmsStubServer() {
+  const host = "127.0.0.1";
+  const port = 3200;
+
+  const server = createServer((request, response) => {
+    if (request.method !== "POST") {
+      response.writeHead(404);
+      response.end("not found");
+      return;
+    }
+
+    let body = "";
+
+    request.on("data", (chunk) => {
+      body += chunk.toString("utf8");
+    });
+    request.on("end", () => {
+      const parsed = body ? JSON.parse(body) : {};
+      const decodedContent =
+        typeof parsed.Content === "string"
+          ? Buffer.from(parsed.Content, "base64").toString("utf8")
+          : "";
+      const rejected = decodedContent.toLowerCase().includes("reject");
+
+      response.writeHead(200, {
+        "content-type": "application/json",
+      });
+      response.end(
+        JSON.stringify({
+          Response: {
+            RequestId: `tms-${parsed.DataId ?? "playwright"}`,
+            Suggestion: rejected ? "Block" : "Pass",
+            Label: rejected ? "Illegal" : "Normal",
+            Keywords: rejected ? ["reject"] : [],
+          },
+        }),
+      );
+    });
+  });
+
+  return new Promise((resolve, reject) => {
+    server.on("error", reject);
+    server.listen(port, host, () => resolve(server));
+  });
+}
+
 async function applyMigrations() {
   const databaseUrl = readDatabaseUrl();
   const schema = readDatabaseSchema();
@@ -216,6 +262,7 @@ async function main() {
   const databaseUrl = readDatabaseUrl();
   const schema = readDatabaseSchema();
   const zpayServer = await createPlaywrightZpayStubServer();
+  const tmsServer = await createPlaywrightTmsStubServer();
   await applyMigrations();
   const isWindows = process.platform === "win32";
   const command = isWindows ? "cmd.exe" : "pnpm";
@@ -231,6 +278,8 @@ async function main() {
         ...process.env,
         DATABASE_URL: withSchemaSearchPath(databaseUrl, schema),
         PLAYWRIGHT_DATABASE_SCHEMA: schema,
+        TENCENT_TMS_ENDPOINT:
+          process.env.TENCENT_TMS_ENDPOINT ?? "http://127.0.0.1:3200",
       },
       stdio: "inherit",
     },
@@ -240,6 +289,7 @@ async function main() {
   process.on("SIGTERM", () => child.kill("SIGTERM"));
   child.on("exit", (code) => {
     zpayServer.close();
+    tmsServer.close();
     process.exit(code ?? 0);
   });
 }

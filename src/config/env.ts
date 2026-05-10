@@ -52,6 +52,9 @@ export const serverEnv = {
   get tencentTmsRegion() {
     return readRequiredStringEnv("TENCENT_TMS_REGION");
   },
+  get tencentTmsEndpoint() {
+    return process.env.TENCENT_TMS_ENDPOINT;
+  },
   get cosBucket() {
     return readRequiredStringEnv("COS_BUCKET");
   },
