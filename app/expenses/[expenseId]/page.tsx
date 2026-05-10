@@ -11,6 +11,17 @@ function formatDate(value: string) {
   return new Date(value).toLocaleString("zh-CN");
 }
 
+function isImageEvidence(evidence: { assetUrl: string; fileName: string }) {
+  const imageExtensionPattern = /\.(apng|avif|gif|jpe?g|png|svg|webp)$/i;
+
+  try {
+    const url = new URL(evidence.assetUrl);
+    return imageExtensionPattern.test(url.pathname) || imageExtensionPattern.test(evidence.fileName);
+  } catch {
+    return imageExtensionPattern.test(evidence.assetUrl) || imageExtensionPattern.test(evidence.fileName);
+  }
+}
+
 export default async function ExpenseDetailPage({
   params,
 }: {
@@ -71,31 +82,58 @@ export default async function ExpenseDetailPage({
               {expense.evidence
                 .slice()
                 .sort((left, right) => left.sortOrder - right.sortOrder)
-                .map((evidence) => (
-                  <figure
-                    key={evidence.id}
-                    className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
-                  >
-                    <a
-                      href={evidence.assetUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block"
+                .map((evidence) => {
+                  const title = evidence.label ?? evidence.fileName;
+
+                  if (isImageEvidence(evidence)) {
+                    return (
+                      <figure
+                        key={evidence.id}
+                        className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
+                      >
+                        <a
+                          href={evidence.assetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={evidence.assetUrl}
+                            alt={title}
+                            className="h-72 w-full object-cover transition duration-200 hover:scale-[1.01]"
+                          />
+                        </a>
+                        <figcaption className="flex items-center justify-between px-4 py-3 text-sm text-slate-600">
+                          <span>{title}</span>
+                          <span className="text-xs text-slate-400">
+                            #{evidence.sortOrder}
+                          </span>
+                        </figcaption>
+                      </figure>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={evidence.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
                     >
-                      <img
-                        src={evidence.assetUrl}
-                        alt={evidence.label ?? evidence.fileName}
-                        className="h-72 w-full object-cover transition duration-200 hover:scale-[1.01]"
-                      />
-                    </a>
-                    <figcaption className="flex items-center justify-between px-4 py-3 text-sm text-slate-600">
-                      <span>{evidence.label ?? evidence.fileName}</span>
-                      <span className="text-xs text-slate-400">
-                        #{evidence.sortOrder}
-                      </span>
-                    </figcaption>
-                  </figure>
-                ))}
+                      <p className="text-sm font-medium text-slate-900">
+                        {title}
+                      </p>
+                      <p className="mt-1 break-all text-xs text-slate-500">
+                        {evidence.fileName}
+                      </p>
+                      <a
+                        href={evidence.assetUrl}
+                        download={evidence.fileName}
+                        className="mt-4 inline-flex items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                      >
+                        下载 {title}
+                      </a>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

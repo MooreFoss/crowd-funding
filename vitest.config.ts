@@ -49,7 +49,7 @@ const fileEnv = [
 
 const testEnv = {
   ADMIN_USERNAME: "test-admin",
-  ADMIN_PASSWORD_HASH: "test-password-hash",
+  ADMIN_PASSWORD: "test-password-hash",
   SESSION_SECRET: "test-session-secret",
   ZPAY_MCH_ID: "test-zpay-merchant",
   ZPAY_KEY: "test-zpay-key",

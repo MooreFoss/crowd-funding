@@ -71,7 +71,7 @@ function createPlaywrightZpayStubServer() {
   const orders = new Map();
   const refunds = new Map();
   const host = "127.0.0.1";
-  const port = 3100;
+  const port = Number(process.env.PLAYWRIGHT_ZPAY_STUB_PORT ?? 3100);
 
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? "/", `http://${host}:${port}`);
@@ -204,7 +204,7 @@ function createPlaywrightZpayStubServer() {
 
 function createPlaywrightTmsStubServer() {
   const host = "127.0.0.1";
-  const port = 3200;
+  const port = Number(process.env.PLAYWRIGHT_TMS_STUB_PORT ?? 3200);
 
   const server = createServer((request, response) => {
     if (request.method !== "POST") {
@@ -293,9 +293,20 @@ async function main() {
   await applyMigrations();
   const isWindows = process.platform === "win32";
   const command = isWindows ? "cmd.exe" : "pnpm";
+  const nextPort = process.env.PLAYWRIGHT_NEXT_PORT ?? "3000";
   const args = isWindows
-    ? ["/c", "pnpm", "exec", "next", "dev", "--hostname", "127.0.0.1", "--port", "3000"]
-    : ["exec", "next", "dev", "--hostname", "127.0.0.1", "--port", "3000"];
+    ? [
+        "/c",
+        "pnpm",
+        "exec",
+        "next",
+        "dev",
+        "--hostname",
+        "127.0.0.1",
+        "--port",
+        nextPort,
+      ]
+    : ["exec", "next", "dev", "--hostname", "127.0.0.1", "--port", nextPort];
 
   const child = spawn(
     command,
@@ -306,7 +317,8 @@ async function main() {
         DATABASE_URL: withSchemaSearchPath(databaseUrl, schema),
         PLAYWRIGHT_DATABASE_SCHEMA: schema,
         TENCENT_TMS_ENDPOINT:
-          process.env.TENCENT_TMS_ENDPOINT ?? "http://127.0.0.1:3200",
+          process.env.TENCENT_TMS_ENDPOINT ??
+          `http://127.0.0.1:${process.env.PLAYWRIGHT_TMS_STUB_PORT ?? 3200}`,
       },
       stdio: "inherit",
     },

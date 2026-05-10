@@ -78,6 +78,114 @@ test.describe("expense evidence", () => {
     await pool.end();
   });
 
+  test("uploads expense evidence through MinIO before saving metadata", async ({
+    page,
+  }) => {
+    const prefix = `PW-UPLOAD-${randomUUID().slice(0, 8)}`;
+    const expenseId = `${prefix}-expense`;
+    const now = new Date("2026-05-10T12:30:00.000Z");
+    const assetUrl = `https://assets.example.com/${prefix}/invoice.pdf`;
+    let uploadTargetRequested = false;
+    let uploadedContentType: string | null = null;
+
+    await pool.query(
+      `INSERT INTO expenses (
+        id, title, amount_fen, description, detail_visibility, created_by, created_at, updated_at
+      ) VALUES ($1, $2, 4321, 'Needs uploaded evidence', 'PUBLIC', 'playwright', $3, $3)`,
+      [expenseId, `${prefix} Upload target`, now],
+    );
+
+    await page.route("**/api/admin/expenses/evidence/upload-url", async (route) => {
+      const request = route.request();
+      const payload = request.postDataJSON() as {
+        fileName?: string;
+        contentType?: string;
+      };
+
+      uploadTargetRequested =
+        payload.fileName === "invoice.pdf" &&
+        payload.contentType === "application/pdf";
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          objectKey: `${prefix}/invoice.pdf`,
+          uploadUrl: `https://minio.example.com/${prefix}/invoice.pdf`,
+          assetUrl,
+          headers: {
+            "content-type": "application/pdf",
+          },
+          expiresAt: "2026-05-10T12:45:00.000Z",
+        }),
+      });
+    });
+    await page.route("https://minio.example.com/**", async (route) => {
+      uploadedContentType = route.request().headers()["content-type"] ?? null;
+      await route.fulfill({ status: 200, body: "" });
+    });
+
+    try {
+      const response = await page.request.post("/api/admin/session", {
+        data: {
+          username: "test-admin",
+          password: "test-password",
+        },
+      });
+
+      expect(response.status()).toBe(200);
+      await page.goto("/admin/expenses");
+
+      const expenseCard = page.locator("article").filter({
+        hasText: `${prefix} Upload target`,
+      });
+
+      await expenseCard
+        .getByLabel("上传凭证")
+        .setInputFiles({
+          name: "invoice.pdf",
+          mimeType: "application/pdf",
+          buffer: Buffer.from("%PDF-1.4 test invoice"),
+        });
+      await expenseCard.getByLabel("凭证标签").fill(`${prefix} PDF invoice`);
+      await expenseCard.getByRole("button", { name: "添加凭证" }).click();
+      await expect(page).toHaveURL(/\/admin\/expenses$/);
+      await expect(page.getByRole("link", { name: `${prefix} PDF invoice` })).toHaveAttribute(
+        "href",
+        assetUrl,
+      );
+
+      const savedEvidence = await pool.query<{
+        asset_url: string;
+        file_name: string;
+        label: string;
+      }>(
+        `SELECT asset_url, file_name, label
+         FROM expense_evidence
+         WHERE expense_id = $1`,
+        [expenseId],
+      );
+
+      expect(uploadTargetRequested).toBe(true);
+      expect(uploadedContentType).toBe("application/pdf");
+      expect(savedEvidence.rows).toEqual([
+        {
+          asset_url: assetUrl,
+          file_name: "invoice.pdf",
+          label: `${prefix} PDF invoice`,
+        },
+      ]);
+    } finally {
+      await pool.query(`DELETE FROM expense_evidence WHERE expense_id = $1`, [
+        expenseId,
+      ]);
+      await pool.query(`DELETE FROM expenses WHERE id = $1`, [expenseId]);
+      await pool.query(
+        `DELETE FROM audit_logs WHERE action = 'ADMIN_LOGIN' AND actor_id = 'test-admin'`,
+      );
+    }
+  });
+
   test("shows public evidence previews and hides audit-only images", async ({
     page,
   }) => {
@@ -86,6 +194,7 @@ test.describe("expense evidence", () => {
     const emptyExpenseId = `${prefix}-empty`;
     const now = new Date("2026-05-10T12:00:00.000Z");
     const publicAssetUrl = `https://assets.example.com/${prefix}/public.png`;
+    const publicFileUrl = `https://assets.example.com/${prefix}/invoice.pdf`;
     const privateAssetUrl = `https://assets.example.com/${prefix}/private.png`;
 
     await pool.query(
@@ -107,7 +216,8 @@ test.describe("expense evidence", () => {
         id, expense_id, asset_url, file_name, label, sort_order, visibility, uploaded_by, created_at, updated_at
       ) VALUES
         ($1, $2, $3, 'public.png', $4, 1, 'PUBLIC', 'playwright', $7, $7),
-        ($5, $2, $6, 'private.png', $8, 2, 'AUDIT_ONLY', 'playwright', $7, $7)`,
+        ($9, $2, $10, 'invoice.pdf', $11, 2, 'PUBLIC', 'playwright', $7, $7),
+        ($5, $2, $6, 'private.png', $8, 3, 'AUDIT_ONLY', 'playwright', $7, $7)`,
       [
         `${prefix}-public`,
         expenseId,
@@ -117,6 +227,9 @@ test.describe("expense evidence", () => {
         privateAssetUrl,
         now,
         `${prefix} Private receipt`,
+        `${prefix}-file`,
+        publicFileUrl,
+        `${prefix} PDF invoice`,
       ],
     );
 
@@ -130,6 +243,12 @@ test.describe("expense evidence", () => {
       await expect(
         page.getByRole("img", { name: `${prefix} Public receipt` }),
       ).toBeVisible();
+      await expect(page.getByRole("img")).toHaveCount(1);
+      await expect(page.getByText(`${prefix} PDF invoice`)).toBeVisible();
+      await expect(page.getByRole("link", { name: /PDF invoice/ })).toHaveAttribute(
+        "href",
+        publicFileUrl,
+      );
       await expect(page.getByText(`${prefix} Private receipt`)).toHaveCount(0);
       await expect(page.getByRole("link", { name: /Public receipt/ })).toHaveAttribute(
         "href",

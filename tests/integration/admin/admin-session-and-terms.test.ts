@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -67,10 +67,6 @@ async function destroyTestContext(context: TestContext) {
   }
 }
 
-function hashPassword(value: string) {
-  return `sha256:${createHash("sha256").update(value).digest("hex")}`;
-}
-
 function withSchemaSearchPath(databaseUrl: string, schema: string) {
   const connection = new URL(databaseUrl);
   connection.searchParams.set("options", `-c search_path=${schema},public`);
@@ -108,20 +104,20 @@ function readSessionCookie(response: Response) {
 describe("admin-session integration", () => {
   let context: TestContext | undefined;
   let originalAdminUsername: string | undefined;
-  let originalAdminPasswordHash: string | undefined;
+  let originalAdminPassword: string | undefined;
   let originalSessionSecret: string | undefined;
   let originalDatabaseUrl: string | undefined;
 
   beforeEach(async () => {
     originalAdminUsername = process.env.ADMIN_USERNAME;
-    originalAdminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+    originalAdminPassword = process.env.ADMIN_PASSWORD;
     originalSessionSecret = process.env.SESSION_SECRET;
     originalDatabaseUrl = process.env.DATABASE_URL;
 
     context = await createTestContext();
 
     process.env.ADMIN_USERNAME = "test-admin";
-    process.env.ADMIN_PASSWORD_HASH = hashPassword("swordfish");
+    process.env.ADMIN_PASSWORD = "swordfish";
     process.env.SESSION_SECRET = "test-session-secret";
     process.env.DATABASE_URL = withSchemaSearchPath(
       originalDatabaseUrl ?? "",
@@ -137,10 +133,10 @@ describe("admin-session integration", () => {
       process.env.ADMIN_USERNAME = originalAdminUsername;
     }
 
-    if (originalAdminPasswordHash === undefined) {
-      delete process.env.ADMIN_PASSWORD_HASH;
+    if (originalAdminPassword === undefined) {
+      delete process.env.ADMIN_PASSWORD;
     } else {
-      process.env.ADMIN_PASSWORD_HASH = originalAdminPasswordHash;
+      process.env.ADMIN_PASSWORD = originalAdminPassword;
     }
 
     if (originalSessionSecret === undefined) {

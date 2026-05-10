@@ -25,8 +25,8 @@ export const serverEnv = {
   get adminUsername() {
     return readRequiredStringEnv("ADMIN_USERNAME");
   },
-  get adminPasswordHash() {
-    return readRequiredStringEnv("ADMIN_PASSWORD_HASH");
+  get adminPassword() {
+    return readRequiredStringEnv("ADMIN_PASSWORD");
   },
   get sessionSecret() {
     return readRequiredStringEnv("SESSION_SECRET");

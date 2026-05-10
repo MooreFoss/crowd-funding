@@ -2,6 +2,8 @@ import { listAdminExpenses } from "@/src/application/admin";
 import { requireAdminPageSession } from "@/src/infrastructure/auth/session";
 import { formatFenToYuan } from "@/src/shared";
 
+import { ExpenseEvidenceUploadForm } from "./ExpenseEvidenceUploadForm";
+
 export const dynamic = "force-dynamic";
 
 function formatTimestamp(value: string | null) {
@@ -54,7 +56,12 @@ export default async function AdminExpensesPage({
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">新增支出</h2>
-        <form action="/api/admin/expenses" method="post" className="mt-6 space-y-5">
+        <ExpenseEvidenceUploadForm
+          action="/api/admin/expenses"
+          defaultSortOrder={1}
+          submitLabel="保存支出"
+          submitClassName="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+        >
           <div className="grid gap-5 md:grid-cols-2">
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-slate-700">
@@ -108,53 +115,8 @@ export default async function AdminExpensesPage({
                 <option value="AUDIT_ONLY">仅审计详情</option>
               </select>
             </div>
-            <div>
-              <label htmlFor="assetUrl" className="block text-sm font-medium text-slate-700">
-                凭证 URL
-              </label>
-              <input
-                id="assetUrl"
-                name="assetUrl"
-                type="url"
-                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-              />
-            </div>
           </div>
-          <div className="grid gap-5 md:grid-cols-4">
-            <input
-              name="fileName"
-              placeholder="文件名"
-              className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-            />
-            <input
-              name="label"
-              placeholder="凭证标签"
-              className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-            />
-            <input
-              name="sortOrder"
-              type="number"
-              min="0"
-              defaultValue="1"
-              placeholder="排序"
-              className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-            />
-            <select
-              name="visibility"
-              defaultValue="PUBLIC"
-              className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-            >
-              <option value="PUBLIC">公开凭证</option>
-              <option value="AUDIT_ONLY">仅审计凭证</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            保存支出
-          </button>
-        </form>
+        </ExpenseEvidenceUploadForm>
       </section>
 
       <section className="space-y-5">
@@ -220,55 +182,14 @@ export default async function AdminExpensesPage({
               </form>
 
               <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                <form action="/api/admin/expenses" method="post" className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <input type="hidden" name="intent" value="add-evidence" />
-                  <input type="hidden" name="expenseId" value={expense.id} />
-                  <div className="grid gap-3">
-                    <input
-                      name="assetUrl"
-                      type="url"
-                      placeholder="凭证 URL"
-                      required
-                      className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-                    />
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <input
-                        name="fileName"
-                        placeholder="文件名"
-                        required
-                        className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-                      />
-                      <input
-                        name="label"
-                        placeholder="凭证标签"
-                        className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-                      />
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <input
-                        name="sortOrder"
-                        type="number"
-                        min="0"
-                        defaultValue={expense.evidence.length + 1}
-                        className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-                      />
-                      <select
-                        name="visibility"
-                        defaultValue="PUBLIC"
-                        className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-                      >
-                        <option value="PUBLIC">公开</option>
-                        <option value="AUDIT_ONLY">仅审计</option>
-                      </select>
-                      <button
-                        type="submit"
-                        className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-                      >
-                        添加凭证
-                      </button>
-                    </div>
-                  </div>
-                </form>
+                <ExpenseEvidenceUploadForm
+                  action="/api/admin/expenses"
+                  defaultSortOrder={expense.evidence.length + 1}
+                  expenseId={expense.id}
+                  intent="add-evidence"
+                  submitLabel="添加凭证"
+                  submitClassName="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                />
 
                 <div className="space-y-3">
                   {expense.evidence.length === 0 ? (

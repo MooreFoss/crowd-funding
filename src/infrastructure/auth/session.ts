@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -16,10 +16,6 @@ export type AdminSession = {
   username: string;
   issuedAt: string;
 };
-
-function hashSha256(value: string) {
-  return createHash("sha256").update(value).digest("hex");
-}
 
 function safeEqualText(left: string, right: string) {
   const leftBuffer = Buffer.from(left, "utf8");
@@ -118,18 +114,7 @@ export function verifyAdminCredentials(input: {
     return false;
   }
 
-  const configuredHash = serverEnv.adminPasswordHash.trim();
-  const passwordHash = hashSha256(input.password);
-
-  if (configuredHash.startsWith("sha256:")) {
-    return safeEqualText(passwordHash, configuredHash.slice("sha256:".length));
-  }
-
-  if (/^[a-f0-9]{64}$/i.test(configuredHash)) {
-    return safeEqualText(passwordHash, configuredHash);
-  }
-
-  return safeEqualText(input.password, configuredHash);
+  return safeEqualText(input.password, serverEnv.adminPassword);
 }
 
 export function getAdminSessionFromCookieHeader(cookieHeader: string | null) {
