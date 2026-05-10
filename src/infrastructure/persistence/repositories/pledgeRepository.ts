@@ -299,9 +299,9 @@ export function createPledgeRepository(
       const row = rows[0];
 
       return {
-        totalRaisedFen: row?.total_raised_fen ?? 0,
-        totalNetFen: row?.total_net_fen ?? 0,
-        sponsorCount: row?.sponsor_count ?? 0,
+        totalRaisedFen: Number(row?.total_raised_fen ?? 0),
+        totalNetFen: Number(row?.total_net_fen ?? 0),
+        sponsorCount: Number(row?.sponsor_count ?? 0),
       } satisfies PledgeMetrics;
     },
 

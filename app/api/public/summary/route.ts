@@ -1,5 +1,9 @@
-import { placeholderResponse } from "@/src/server/http/placeholderResponse";
+import { NextResponse } from "next/server";
 
-export function GET() {
-  return placeholderResponse("public funding summary", ["GET"]);
+import { getSummary } from "@/src/application/public";
+
+export async function GET() {
+  const summary = await getSummary();
+
+  return NextResponse.json(summary);
 }

@@ -1,5 +1,19 @@
-import { placeholderResponse } from "@/src/server/http/placeholderResponse";
+import { NextResponse } from "next/server";
 
-export function GET() {
-  return placeholderResponse("public sponsorship records", ["GET"]);
+import { listPledges } from "@/src/application/public";
+
+function parsePositiveInteger(value: string | null, fallback: number) {
+  const parsed = Number.parseInt(value ?? "", 10);
+
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const pledges = await listPledges({
+    limit: parsePositiveInteger(searchParams.get("limit"), 20),
+    offset: parsePositiveInteger(searchParams.get("offset"), 0),
+  });
+
+  return NextResponse.json(pledges);
 }
