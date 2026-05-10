@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
+import { createServer } from "node:http";
 import { join } from "node:path";
 
 import { Pool } from "pg";
@@ -66,6 +67,114 @@ function withSchemaSearchPath(databaseUrl, schema) {
   return connection.toString();
 }
 
+function createPlaywrightZpayStubServer() {
+  const orders = new Map();
+  const host = "127.0.0.1";
+  const port = 3100;
+
+  const server = createServer((request, response) => {
+    const url = new URL(request.url ?? "/", `http://${host}:${port}`);
+
+    if (request.method === "POST" && url.pathname === "/mapi.php") {
+      let body = "";
+
+      request.on("data", (chunk) => {
+        body += chunk.toString("utf8");
+      });
+      request.on("end", () => {
+        const formData = new URLSearchParams(body);
+        const merchantOrderNo = formData.get("out_trade_no");
+        const returnUrl = formData.get("return_url");
+
+        if (!merchantOrderNo || !returnUrl) {
+          response.writeHead(400, {
+            "content-type": "application/json",
+          });
+          response.end(JSON.stringify({ code: 0, msg: "missing out_trade_no" }));
+          return;
+        }
+
+        const tradeNo = `ZPAY-${merchantOrderNo}`;
+        orders.set(merchantOrderNo, {
+          tradeNo,
+          paid: false,
+        });
+
+        response.writeHead(200, {
+          "content-type": "application/json",
+        });
+        response.end(
+          JSON.stringify({
+            code: 1,
+            msg: "success",
+            trade_no: tradeNo,
+            payurl2: `http://${host}:${port}/cashier?out_trade_no=${encodeURIComponent(merchantOrderNo)}&return_url=${encodeURIComponent(returnUrl)}`,
+          }),
+        );
+      });
+      return;
+    }
+
+    if (request.method === "GET" && url.pathname === "/api.php") {
+      const merchantOrderNo = url.searchParams.get("out_trade_no");
+      const order = merchantOrderNo ? orders.get(merchantOrderNo) : null;
+
+      response.writeHead(200, {
+        "content-type": "application/json",
+      });
+      response.end(
+        JSON.stringify({
+          code: 1,
+          msg: "success",
+          trade_no: order?.tradeNo ?? null,
+          out_trade_no: merchantOrderNo,
+          status: order?.paid ? 1 : 0,
+        }),
+      );
+      return;
+    }
+
+    if (request.method === "GET" && url.pathname === "/cashier") {
+      const merchantOrderNo = url.searchParams.get("out_trade_no");
+      const returnUrl = url.searchParams.get("return_url");
+
+      if (merchantOrderNo && orders.has(merchantOrderNo)) {
+        const order = orders.get(merchantOrderNo);
+        order.paid = true;
+        orders.set(merchantOrderNo, order);
+      }
+
+      response.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+      });
+      response.end(`<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>ZPAY Stub</title>
+  </head>
+  <body>
+    <p>模拟微信 H5 收银台，正在返回应用...</p>
+    <script>
+      setTimeout(function () {
+        window.location.href = ${JSON.stringify(returnUrl ?? "http://127.0.0.1:3000/payment/return")};
+      }, 500);
+    </script>
+  </body>
+</html>`);
+      return;
+    }
+
+    response.writeHead(404);
+    response.end("not found");
+  });
+
+  return new Promise((resolve, reject) => {
+    server.on("error", reject);
+    server.listen(port, host, () => resolve(server));
+  });
+}
+
 async function applyMigrations() {
   const databaseUrl = readDatabaseUrl();
   const schema = readDatabaseSchema();
@@ -106,6 +215,7 @@ async function applyMigrations() {
 async function main() {
   const databaseUrl = readDatabaseUrl();
   const schema = readDatabaseSchema();
+  const zpayServer = await createPlaywrightZpayStubServer();
   await applyMigrations();
   const isWindows = process.platform === "win32";
   const command = isWindows ? "cmd.exe" : "pnpm";
@@ -128,7 +238,10 @@ async function main() {
 
   process.on("SIGINT", () => child.kill("SIGINT"));
   process.on("SIGTERM", () => child.kill("SIGTERM"));
-  child.on("exit", (code) => process.exit(code ?? 0));
+  child.on("exit", (code) => {
+    zpayServer.close();
+    process.exit(code ?? 0);
+  });
 }
 
 main().catch((error) => {

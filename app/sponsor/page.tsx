@@ -2,8 +2,15 @@ import { getActiveTermsVersion } from "@/src/application/admin";
 
 export const dynamic = "force-dynamic";
 
-export default async function SponsorPage() {
+export default async function SponsorPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const activeTerms = await getActiveTermsVersion();
+  const resolvedSearchParams = await searchParams;
+  const errorParam = resolvedSearchParams.error;
+  const error = typeof errorParam === "string" ? errorParam : null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
@@ -14,26 +21,26 @@ export default async function SponsorPage() {
         </p>
       </div>
 
-      <form className="mt-12 space-y-8 rounded-2xl bg-white p-8 shadow-xl ring-1 ring-slate-200">
+      {error ? (
+        <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      <form action="/api/sponsorship/orders" method="post" className="mt-12 space-y-8 rounded-2xl bg-white p-8 shadow-xl ring-1 ring-slate-200">
         <div className="space-y-6">
           {/* Amount Selection */}
           <div>
-            <label className="text-base font-semibold text-slate-900">选择赞助金额 (¥)</label>
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              {['10', '50', '100', '200', '500', '1000'].map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  className="flex items-center justify-center rounded-lg border border-slate-200 py-3 text-sm font-semibold text-slate-900 hover:border-blue-600 hover:text-blue-600 transition-all focus:outline-none focus:ring-2 focus:ring-blue-600"
-                >
-                  ¥ {amount}
-                </button>
-              ))}
-            </div>
+            <label htmlFor="amount" className="text-base font-semibold text-slate-900">赞助金额 (¥)</label>
             <div className="mt-4">
               <input
+                id="amount"
+                name="amount"
                 type="number"
-                placeholder="自定义金额"
+                step="0.01"
+                min="0.01"
+                defaultValue="10"
+                placeholder="10.00"
                 className="block w-full rounded-lg border-slate-200 py-3 text-slate-900 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm"
               />
             </div>
@@ -45,7 +52,7 @@ export default async function SponsorPage() {
             <div className="mt-1">
               <input
                 type="text"
-                name="nickname"
+                name="displayName"
                 id="nickname"
                 placeholder="匿名用户"
                 className="block w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm"
@@ -72,7 +79,7 @@ export default async function SponsorPage() {
             <div className="flex h-5 items-center">
               <input
                 id="terms"
-                name="terms"
+                name="termsAccepted"
                 type="checkbox"
                 className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
               />
