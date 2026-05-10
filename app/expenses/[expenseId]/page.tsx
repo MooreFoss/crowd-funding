@@ -76,11 +76,18 @@ export default async function ExpenseDetailPage({
                     key={evidence.id}
                     className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
                   >
-                    <img
-                      src={evidence.assetUrl}
-                      alt={evidence.label ?? evidence.fileName}
-                      className="h-72 w-full object-cover"
-                    />
+                    <a
+                      href={evidence.assetUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block"
+                    >
+                      <img
+                        src={evidence.assetUrl}
+                        alt={evidence.label ?? evidence.fileName}
+                        className="h-72 w-full object-cover transition duration-200 hover:scale-[1.01]"
+                      />
+                    </a>
                     <figcaption className="flex items-center justify-between px-4 py-3 text-sm text-slate-600">
                       <span>{evidence.label ?? evidence.fileName}</span>
                       <span className="text-xs text-slate-400">

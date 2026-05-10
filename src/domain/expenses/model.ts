@@ -62,6 +62,15 @@ export type AddExpenseEvidenceInput = {
   uploadedBy: string;
 };
 
+export type UpdateExpenseEvidenceInput = {
+  id: string;
+  assetUrl?: string;
+  fileName?: string;
+  label?: string | null;
+  sortOrder: number;
+  visibility: ExpenseEvidenceVisibility;
+};
+
 export interface ExpenseRepository {
   create(input: CreateExpenseInput): Promise<ExpenseRecord>;
   update(input: UpdateExpenseInput): Promise<ExpenseRecord>;
@@ -69,6 +78,9 @@ export interface ExpenseRepository {
   listPublic(): Promise<ExpenseRecord[]>;
   listAdmin(): Promise<ExpenseRecord[]>;
   addEvidence(input: AddExpenseEvidenceInput): Promise<ExpenseEvidenceRecord>;
+  updateEvidence(
+    input: UpdateExpenseEvidenceInput,
+  ): Promise<ExpenseEvidenceRecord>;
   listEvidence(expenseId: string): Promise<ExpenseEvidenceRecord[]>;
   getDetail(id: string): Promise<ExpenseDetailRecord | null>;
   getPublicDetail(id: string): Promise<ExpenseDetailRecord | null>;

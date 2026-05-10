@@ -9,6 +9,7 @@ import type {
   ExpenseRepository,
   ExpenseDetailVisibility,
   ExpenseEvidenceVisibility,
+  UpdateExpenseEvidenceInput,
   UpdateExpenseInput,
 } from "@/src/domain/expenses";
 
@@ -204,6 +205,33 @@ export function createExpenseRepository(
       );
 
       return mapExpenseEvidenceRow(rows[0]);
+    },
+
+    async updateEvidence(input: UpdateExpenseEvidenceInput) {
+      const { rows } = await executor.query<ExpenseEvidenceRow>(
+        `UPDATE expense_evidence
+         SET asset_url = COALESCE($2, asset_url),
+             file_name = COALESCE($3, file_name),
+             label = $4,
+             sort_order = $5,
+             visibility = $6,
+             updated_at = $7
+         WHERE id = $1
+         RETURNING *`,
+        [
+          input.id,
+          input.assetUrl ?? null,
+          input.fileName ?? null,
+          input.label ?? null,
+          input.sortOrder,
+          input.visibility,
+          new Date(),
+        ],
+      );
+
+      return mapExpenseEvidenceRow(
+        requireRow(rows[0], `Expense evidence ${input.id} was not found.`),
+      );
     },
 
     async listEvidence(expenseId: string) {
