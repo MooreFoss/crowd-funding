@@ -1,6 +1,6 @@
 # 项目骨架说明
 
-本项目按 `docs/SRS.md` 的首期范围先搭建目录和文件结构，当前不包含资金池计算、支付、退款、数据库访问、鉴权等业务实现。
+本项目按 `docs/SRS.md` 的首期范围实现单活动众筹生命周期：公开展示、ZPAY 微信 H5 支付、腾讯云 TMS 审核、支出凭证、退款、关停结算和审计。
 
 ## 路由层
 
@@ -10,14 +10,19 @@
 - `app/sponsor/page.tsx`：用户端发起赞助入口。
 - `app/terms/page.tsx`：用户端生效条款入口。
 - `app/admin/**`：管理端赞助、退款、支出、条款与审计入口。
-- `app/api/**`：用户端、管理端、支付通知、退款通知的 API 占位端点。
+- `app/api/**`：用户端、管理端、支付通知、退款通知和证据上传 URL 的 API 边界。
 
 ## 业务分层
 
-- `src/domain/**`：领域模型、领域规则和仓储接口的预留位置。
-- `src/application/**`：用户端、管理端、支付、退款等应用用例的预留位置。
-- `src/infrastructure/**`：鉴权、持久化、支付网关、审计、通知等外部依赖适配层。
+- `src/domain/**`：领域模型、领域规则、状态模型和仓储接口。
+- `src/application/**`：用户端、管理端、支付、退款、关停和审核应用用例。
+- `src/infrastructure/**`：鉴权、持久化、ZPAY、腾讯云 TMS、COS、审计等外部依赖适配层。
 - `src/infrastructure/persistence/client.ts`：PostgreSQL 连接池入口，从服务端环境变量读取 `DATABASE_URL`。
+- `src/infrastructure/persistence/migrations/**`：数据库迁移，按文件名顺序执行。
+- `src/infrastructure/payments/zpay.ts`：ZPAY 微信 H5 支付、订单查询和退款适配器。
+- `src/infrastructure/moderation/tencentTms.ts`：腾讯云 TMS 文本审核适配器。
+- `src/infrastructure/storage/cos.ts`：腾讯云 COS 凭证图片上传 URL 适配器。
+- `src/infrastructure/audit/logger.ts`：审计事件写入入口。
 - `src/validation/**`：表单、请求参数和回调载荷校验的预留位置。
 - `src/ui/**`：页面组件和展示层组件。
 - `src/server/**`：服务端 HTTP 工具和路由共享基础设施。

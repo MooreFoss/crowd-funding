@@ -6,6 +6,7 @@ import {
   type CampaignCloseSnapshot,
 } from "@/src/domain/funding";
 import { createConfiguredPaymentGateway } from "@/src/application/payments";
+import { logAuditEvent } from "@/src/infrastructure/audit";
 
 import {
   type RefundGateway,
@@ -97,13 +98,33 @@ export async function closeCampaign(
     })),
   };
 
-  return campaignState.saveCloseSnapshot({
+  const state = await campaignState.saveCloseSnapshot({
     campaignId: CAMPAIGN_ID,
     closeReason,
     closedBy: input.closedBy,
     closedAt,
     snapshot,
   });
+
+  if (!repositories || repositories.auditLogs) {
+    await logAuditEvent(
+      {
+        actorType: "ADMIN",
+        actorId: input.closedBy,
+        action: "CAMPAIGN_CLOSED",
+        targetType: "CAMPAIGN",
+        targetId: CAMPAIGN_ID,
+        afterSummary: {
+          status: state.status,
+          snapshotId: snapshot.snapshotId,
+          refundableBalanceFen: snapshot.refundableBalanceFen,
+        },
+      },
+      repositories?.auditLogs ? { auditLogs: repositories.auditLogs } : undefined,
+    );
+  }
+
+  return state;
 }
 
 export async function createBatchRefund(
@@ -204,6 +225,26 @@ export async function createBatchRefund(
     },
     settledAt: createdRefunds.length === 0 ? new Date() : null,
   });
+
+  if (!options.repositories || options.repositories.auditLogs) {
+    await logAuditEvent(
+      {
+        actorType: "ADMIN",
+        actorId: input.requestedBy,
+        action: "BATCH_REFUNDS_CREATED",
+        targetType: "CAMPAIGN",
+        targetId: CAMPAIGN_ID,
+        afterSummary: {
+          batchNo,
+          createdCount: createdRefunds.length,
+          failed,
+        },
+      },
+      options.repositories?.auditLogs
+        ? { auditLogs: options.repositories.auditLogs }
+        : undefined,
+    );
+  }
 
   return {
     batchNo,

@@ -1,4 +1,6 @@
+import type { AuditLogRepository } from "@/src/domain/audit";
 import type { TermsRepository, TermsVersionRecord } from "@/src/domain/terms";
+import { logAuditEvent } from "@/src/infrastructure/audit";
 import type { DatabaseExecutor } from "@/src/infrastructure/persistence/client";
 import {
   queryDatabase,
@@ -7,6 +9,7 @@ import {
 import { createTermsRepository } from "@/src/infrastructure/persistence/repositories";
 
 type TermsRepositoriesInput = {
+  auditLogs?: AuditLogRepository;
   executor?: DatabaseExecutor;
   terms?: TermsRepository;
 };
@@ -109,6 +112,23 @@ export async function publishTermsVersion(
             publishedAt: publishAt,
           }),
         );
+
+  if (!repositories || repositories.auditLogs) {
+    await logAuditEvent(
+      {
+        actorType: "ADMIN",
+        actorId: "admin",
+        action: "TERMS_PUBLISHED",
+        targetType: "TERMS_VERSION",
+        targetId: published.id,
+        afterSummary: {
+          version: published.version,
+          status: published.status,
+        },
+      },
+      repositories?.auditLogs ? { auditLogs: repositories.auditLogs } : undefined,
+    );
+  }
 
   return mapTermsVersion(published);
 }

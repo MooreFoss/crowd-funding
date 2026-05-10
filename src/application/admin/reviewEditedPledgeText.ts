@@ -1,3 +1,4 @@
+import type { AuditLogRepository } from "@/src/domain/audit";
 import type {
   ModerationReviewRecord,
   ModerationReviewRepository,
@@ -5,6 +6,7 @@ import type {
   PledgeRepository,
 } from "@/src/domain/pledges";
 import { reviewPledgePublicText } from "@/src/application/public";
+import { logAuditEvent } from "@/src/infrastructure/audit";
 import type { TextModerator } from "@/src/infrastructure/moderation";
 import type { DatabaseExecutor } from "@/src/infrastructure/persistence/client";
 import { queryDatabase } from "@/src/infrastructure/persistence/client";
@@ -14,6 +16,7 @@ import {
 } from "@/src/infrastructure/persistence/repositories";
 
 type AdminPledgeRepositoriesInput = {
+  auditLogs?: AuditLogRepository;
   executor?: DatabaseExecutor;
   moderationReviews?: ModerationReviewRepository;
   pledges?: PledgeRepository;
@@ -215,7 +218,7 @@ export async function reviewEditedPledgeText(
     throw new Error(`Pledge ${input.pledgeId} was not found.`);
   }
 
-  return reviewPledgePublicText(
+  const updated = await reviewPledgePublicText(
     {
       pledgeId: pledge.id,
       subjectType: "PLEDGE_EDIT",
@@ -231,4 +234,29 @@ export async function reviewEditedPledgeText(
       },
     },
   );
+
+  if (!options?.repositories || options.repositories.auditLogs) {
+    await logAuditEvent(
+      {
+        actorType: "ADMIN",
+        actorId: "admin",
+        action: "PLEDGE_TEXT_EDITED",
+        targetType: "PLEDGE",
+        targetId: pledge.id,
+        beforeSummary: {
+          publicName: pledge.publicName,
+          publicMessage: pledge.publicMessage,
+        },
+        afterSummary: {
+          publicName: updated.publicName,
+          publicMessage: updated.publicMessage,
+        },
+      },
+      options?.repositories?.auditLogs
+        ? { auditLogs: options.repositories.auditLogs }
+        : undefined,
+    );
+  }
+
+  return updated;
 }

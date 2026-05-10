@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import type { AuditLogRepository } from "@/src/domain/audit";
 import type { CampaignStateRepository } from "@/src/domain/funding";
 import type { ExpenseRepository } from "@/src/domain/expenses";
 import type { PledgeRecord, PledgeRepository } from "@/src/domain/pledges";
@@ -13,6 +14,7 @@ import {
   createRefundRepository,
 } from "@/src/infrastructure/persistence/repositories";
 import { createConfiguredPaymentGateway } from "@/src/application/payments";
+import { logAuditEvent, logAuditEventIdempotent } from "@/src/infrastructure/audit";
 import { parseMoneyToFen } from "@/src/shared";
 
 export type RefundGateway = {
@@ -28,6 +30,7 @@ export type RefundGateway = {
 };
 
 export type RefundRepositoriesInput = {
+  auditLogs?: AuditLogRepository;
   campaignState?: CampaignStateRepository;
   executor?: DatabaseExecutor;
   expenses?: ExpenseRepository;
@@ -164,6 +167,29 @@ export async function createSingleRefund(
       merchantRefundNo,
       providerRefundNo: response.providerRefundNo,
       status: response.accepted ? "PROCESSING" : "EXCEPTION",
+    }).then(async (refund) => {
+      if (!options.repositories || options.repositories.auditLogs) {
+        await logAuditEvent(
+          {
+            actorType: "ADMIN",
+            actorId: input.requestedBy,
+            action: "SINGLE_REFUND_REQUESTED",
+            targetType: "REFUND",
+            targetId: refund.id,
+            afterSummary: {
+              pledgeId: pledge.id,
+              merchantRefundNo,
+              amountFen,
+              status: refund.status,
+            },
+          },
+          options.repositories?.auditLogs
+            ? { auditLogs: options.repositories.auditLogs }
+            : undefined,
+        );
+      }
+
+      return refund;
     });
   } catch (error) {
     await refunds.markStatus({
@@ -205,6 +231,26 @@ export async function confirmRefundNotification(
       pledgeId: current.pledgeId,
       amountFen: current.amountFen,
     });
+  }
+
+  if (!repositories || repositories.auditLogs) {
+    await logAuditEventIdempotent(
+      {
+        actorType: "SYSTEM",
+        actorId: "zpay",
+        action: "REFUND_NOTIFICATION",
+        targetType: "REFUND",
+        targetId: current.id,
+        beforeSummary: { status: current.status },
+        afterSummary: { status: updated.status },
+        metadata: {
+          merchantRefundNo: input.merchantRefundNo,
+          providerRefundNo: input.providerRefundNo,
+        },
+        idempotencyKey: `refund:${input.merchantRefundNo}:${input.status}`,
+      },
+      repositories?.auditLogs ? { auditLogs: repositories.auditLogs } : undefined,
+    );
   }
 
   return updated;

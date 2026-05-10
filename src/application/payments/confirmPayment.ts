@@ -1,12 +1,15 @@
+import type { AuditLogRepository } from "@/src/domain/audit";
 import type { PledgeRepository } from "@/src/domain/pledges";
 import type { DatabaseExecutor } from "@/src/infrastructure/persistence/client";
 import { queryDatabase } from "@/src/infrastructure/persistence/client";
 import { createPledgeRepository } from "@/src/infrastructure/persistence/repositories";
+import { logAuditEventIdempotent } from "@/src/infrastructure/audit";
 import { getStatusLabel } from "@/src/shared";
 
 import type { PaymentGateway } from "./createSponsorOrder";
 
 type PaymentRepositoriesInput = {
+  auditLogs?: AuditLogRepository;
   executor?: DatabaseExecutor;
   pledges?: PledgeRepository;
 };
@@ -74,6 +77,28 @@ export async function confirmPaymentNotification(
         paidAt: current.paidAt ?? new Date(),
       })
     : current;
+
+  if (input.paid && (!repositories || repositories.auditLogs)) {
+    await logAuditEventIdempotent(
+      {
+        actorType: "SYSTEM",
+        actorId: "zpay",
+        action: "PAYMENT_NOTIFICATION",
+        targetType: "PLEDGE",
+        targetId: current.id,
+        beforeSummary: { status: current.status },
+        afterSummary: { status: record.status },
+        metadata: {
+          merchantOrderNo: input.merchantOrderNo,
+          providerOrderNo: input.providerOrderNo,
+        },
+        idempotencyKey: `payment:${input.merchantOrderNo}:paid`,
+      },
+      repositories?.auditLogs
+        ? { auditLogs: repositories.auditLogs }
+        : undefined,
+    );
+  }
 
   return mapPublicSponsorOrderStatus(record);
 }

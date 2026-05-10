@@ -1,6 +1,10 @@
 import Link from "next/link";
 
+import { listAdminPledges } from "@/src/application/admin";
+import { getSummary } from "@/src/application/public";
+import { listRefundCenter } from "@/src/application/refunds";
 import { getAdminSession } from "@/src/infrastructure/auth/session";
+import { formatFenToYuan, getStatusLabel } from "@/src/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -90,27 +94,49 @@ export default async function AdminDashboardPage({
     );
   }
 
+  const [summary, refunds, pledges] = await Promise.all([
+    getSummary(),
+    listRefundCenter(),
+    listAdminPledges({ limit: 100, offset: 0 }),
+  ]);
+  const pendingRefunds = refunds.refunds.filter((refund) =>
+    ["CREATED", "PROCESSING"].includes(refund.status),
+  ).length;
+  const moderationFailures = pledges.items.filter(
+    (pledge) =>
+      pledge.moderation.displayName?.status === "REJECTED" ||
+      pledge.moderation.message?.status === "REJECTED" ||
+      pledge.moderation.displayName?.status === "REVIEW_ERROR" ||
+      pledge.moderation.message?.status === "REVIEW_ERROR",
+  ).length;
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">管理控制台概览</h1>
         <p className="mt-1 text-sm text-slate-500">
-          当前登录账号：{session.username}。后台能力将按任务阶段逐步接入真实数据与操作流。
+          当前登录账号：{session.username}。指标来自当前权威数据。
         </p>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">会话状态</p>
-          <p className="mt-2 text-3xl font-semibold text-emerald-600">已登录</p>
+          <p className="text-sm text-slate-500">资金池余额</p>
+          <p className="mt-2 text-3xl font-semibold text-slate-900">
+            {formatFenToYuan(summary.balanceFen)}
+          </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">条款入口</p>
-          <p className="mt-2 text-3xl font-semibold text-slate-900">已启用</p>
+          <p className="text-sm text-slate-500">待处理退款</p>
+          <p className="mt-2 text-3xl font-semibold text-amber-600">
+            {pendingRefunds}
+          </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">下个任务</p>
-          <p className="mt-2 text-3xl font-semibold text-slate-900">支付接入</p>
+          <p className="text-sm text-slate-500">审核异常</p>
+          <p className="mt-2 text-3xl font-semibold text-red-600">
+            {moderationFailures}
+          </p>
         </div>
       </div>
 
@@ -119,26 +145,26 @@ export default async function AdminDashboardPage({
           <h2 className="text-lg font-semibold text-slate-900">快速操作</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link
-              href="/admin/terms"
+              href="/admin/refunds"
               className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
             >
-              维护条款版本
+              退款与关停
             </Link>
             <Link
-              href="/terms"
+              href="/admin/audit-logs"
               className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
             >
-              查看用户侧条款
+              查看审计日志
             </Link>
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">当前范围</h2>
+          <h2 className="text-lg font-semibold text-slate-900">活动状态</h2>
           <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-            <li>已接入管理员会话校验与退出登录。</li>
-            <li>已接入条款版本草稿创建、发布与公开查询。</li>
-            <li>后续任务将继续补齐支付、审核、退款与审计能力。</li>
+            <li>众筹状态：{getStatusLabel(summary.campaignStatus)}</li>
+            <li>累计赞助：{formatFenToYuan(summary.totalRaisedFen)}</li>
+            <li>累计支出：{formatFenToYuan(summary.totalExpenseFen)}</li>
           </ul>
         </div>
       </div>

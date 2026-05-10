@@ -1,9 +1,11 @@
+import type { AuditLogRepository } from "@/src/domain/audit";
 import type {
   ExpenseDetailRecord,
   ExpenseEvidenceRecord,
   ExpenseEvidenceVisibility,
   ExpenseRepository,
 } from "@/src/domain/expenses";
+import { logAuditEvent } from "@/src/infrastructure/audit";
 import type { EvidenceUploadTargetInput } from "@/src/infrastructure/storage";
 import { createConfiguredCosEvidenceStorage } from "@/src/infrastructure/storage";
 import type { DatabaseExecutor } from "@/src/infrastructure/persistence/client";
@@ -12,6 +14,7 @@ import { createExpenseRepository } from "@/src/infrastructure/persistence/reposi
 import { parseMoneyToFen } from "@/src/shared";
 
 type AdminExpenseRepositoriesInput = {
+  auditLogs?: AuditLogRepository;
   executor?: DatabaseExecutor;
   expenses?: ExpenseRepository;
 };
@@ -155,6 +158,24 @@ export async function createAdminExpense(
     throw new Error(`Expense ${created.id} was not found after creation.`);
   }
 
+  if (!repositories || repositories.auditLogs) {
+    await logAuditEvent(
+      {
+        actorType: "ADMIN",
+        actorId: input.createdBy,
+        action: "EXPENSE_CREATED",
+        targetType: "EXPENSE",
+        targetId: created.id,
+        afterSummary: {
+          title: created.title,
+          amountFen: created.amountFen,
+          evidenceCount: input.evidence?.length ?? 0,
+        },
+      },
+      repositories?.auditLogs ? { auditLogs: repositories.auditLogs } : undefined,
+    );
+  }
+
   return mapExpenseDetail(detail);
 }
 
@@ -194,6 +215,29 @@ export async function updateAdminExpense(
     throw new Error(`Expense ${updated.id} was not found after update.`);
   }
 
+  if (!repositories || repositories.auditLogs) {
+    await logAuditEvent(
+      {
+        actorType: "ADMIN",
+        actorId: current.createdBy,
+        action: "EXPENSE_UPDATED",
+        targetType: "EXPENSE",
+        targetId: updated.id,
+        beforeSummary: {
+          title: current.title,
+          amountFen: current.amountFen,
+          description: current.description,
+        },
+        afterSummary: {
+          title: updated.title,
+          amountFen: updated.amountFen,
+          description: updated.description,
+        },
+      },
+      repositories?.auditLogs ? { auditLogs: repositories.auditLogs } : undefined,
+    );
+  }
+
   return mapExpenseDetail(detail);
 }
 
@@ -210,6 +254,24 @@ export async function addAdminExpenseEvidence(
     uploadedBy: input.uploadedBy,
     ...normalizeEvidenceInput(input, input.sortOrder ?? 1),
   });
+
+  if (!repositories || repositories.auditLogs) {
+    await logAuditEvent(
+      {
+        actorType: "ADMIN",
+        actorId: input.uploadedBy,
+        action: "EXPENSE_EVIDENCE_ADDED",
+        targetType: "EXPENSE",
+        targetId: input.expenseId,
+        afterSummary: {
+          evidenceId: evidence.id,
+          visibility: evidence.visibility,
+          sortOrder: evidence.sortOrder,
+        },
+      },
+      repositories?.auditLogs ? { auditLogs: repositories.auditLogs } : undefined,
+    );
+  }
 
   return mapEvidence(evidence);
 }
@@ -234,6 +296,24 @@ export async function updateAdminExpenseEvidence(
     sortOrder: input.sortOrder,
     visibility: input.visibility,
   });
+
+  if (!repositories || repositories.auditLogs) {
+    await logAuditEvent(
+      {
+        actorType: "ADMIN",
+        actorId: "admin",
+        action: "EXPENSE_EVIDENCE_UPDATED",
+        targetType: "EXPENSE_EVIDENCE",
+        targetId: evidence.id,
+        afterSummary: {
+          visibility: evidence.visibility,
+          sortOrder: evidence.sortOrder,
+          label: evidence.label,
+        },
+      },
+      repositories?.auditLogs ? { auditLogs: repositories.auditLogs } : undefined,
+    );
+  }
 
   return mapEvidence(evidence);
 }

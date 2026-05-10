@@ -10,6 +10,7 @@ import {
   getAdminSessionFromRequest,
   setAdminSessionCookie,
 } from "@/src/infrastructure/auth/session";
+import { logAuditEvent } from "@/src/infrastructure/audit";
 
 const loginSchema = z.object({
   username: z.string().trim().min(1),
@@ -97,6 +98,16 @@ export async function POST(request: Request) {
       : NextResponse.json(authentication);
 
   setAdminSessionCookie(response, authentication.username);
+  await logAuditEvent({
+    actorType: "ADMIN",
+    actorId: authentication.username,
+    action: "ADMIN_LOGIN",
+    targetType: "ADMIN_SESSION",
+    targetId: authentication.username,
+    metadata: {
+      userAgent: request.headers.get("user-agent"),
+    },
+  });
   return response;
 }
 

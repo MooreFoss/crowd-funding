@@ -6,6 +6,7 @@ import type {
   AuditActorType,
   AuditLogRecord,
   AuditLogRepository,
+  ListAuditLogsInput,
   ListAuditLogsByTargetInput,
 } from "@/src/domain/audit";
 
@@ -171,6 +172,42 @@ export function createAuditLogRepository(
           ),
         ),
       } satisfies AppendAuditLogResult;
+    },
+
+    async list(input: ListAuditLogsInput = {}) {
+      const filters = [];
+      const values: unknown[] = [];
+
+      if (input.targetType) {
+        values.push(input.targetType);
+        filters.push(`target_type = $${values.length}`);
+      }
+
+      if (input.targetId) {
+        values.push(input.targetId);
+        filters.push(`target_id = $${values.length}`);
+      }
+
+      if (input.action) {
+        values.push(input.action);
+        filters.push(`action = $${values.length}`);
+      }
+
+      values.push(Math.min(Math.max(input.limit ?? 100, 1), 200));
+      const limitIndex = values.length;
+      values.push(Math.max(input.offset ?? 0, 0));
+      const offsetIndex = values.length;
+
+      const { rows } = await executor.query<AuditLogRow>(
+        `SELECT *
+         FROM audit_logs
+         ${filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : ""}
+         ORDER BY occurred_at DESC, id DESC
+         LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+        values,
+      );
+
+      return rows.map(mapAuditLogRow);
     },
 
     async listByTarget(input: ListAuditLogsByTargetInput) {

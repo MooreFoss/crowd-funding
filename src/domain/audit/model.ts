@@ -37,8 +37,17 @@ export type ListAuditLogsByTargetInput = {
   targetId: string;
 };
 
+export type ListAuditLogsInput = {
+  targetType?: string | null;
+  targetId?: string | null;
+  action?: string | null;
+  limit?: number;
+  offset?: number;
+};
+
 export interface AuditLogRepository {
   append(input: AppendAuditLogInput): Promise<AuditLogRecord>;
   appendIdempotent(input: AppendAuditLogInput): Promise<AppendAuditLogResult>;
+  list(input?: ListAuditLogsInput): Promise<AuditLogRecord[]>;
   listByTarget(input: ListAuditLogsByTargetInput): Promise<AuditLogRecord[]>;
 }
