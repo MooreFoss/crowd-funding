@@ -1,9 +1,17 @@
 import "server-only";
-import { Pool, type QueryResultRow } from "pg";
+import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from "pg";
+
 import { serverEnv } from "@/src/config/env";
 
 declare global {
   var crowdFundingDatabasePool: Pool | undefined;
+}
+
+export interface DatabaseExecutor {
+  query<Row extends QueryResultRow = QueryResultRow>(
+    text: string,
+    values?: unknown[],
+  ): Promise<QueryResult<Row>>;
 }
 
 function createDatabasePool() {
@@ -19,6 +27,18 @@ export function getDatabasePool() {
   globalThis.crowdFundingDatabasePool ??= createDatabasePool();
 
   return globalThis.crowdFundingDatabasePool;
+}
+
+export async function withDatabaseClient<Result>(
+  callback: (client: PoolClient) => Promise<Result>,
+) {
+  const client = await getDatabasePool().connect();
+
+  try {
+    return await callback(client);
+  } finally {
+    client.release();
+  }
 }
 
 export function queryDatabase<T extends QueryResultRow = QueryResultRow>(
