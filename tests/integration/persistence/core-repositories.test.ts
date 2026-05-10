@@ -240,6 +240,40 @@ describe("core persistence repositories", () => {
     expect(stillActiveTerms?.status).toBe("ACTIVE");
   });
 
+  it("retires the previous active terms version when publishing a newer one", async () => {
+    const firstTerms = await context.terms.create({
+      version: "v1.0.0",
+      title: "Initial terms",
+      body: "Initial body",
+      status: "DRAFT",
+      createdBy: "admin",
+    });
+    const secondTerms = await context.terms.create({
+      version: "v1.1.0",
+      title: "Updated terms",
+      body: "Updated body",
+      status: "DRAFT",
+      createdBy: "admin",
+    });
+
+    await context.terms.publish({
+      id: firstTerms.id,
+      publishedAt: new Date("2026-05-10T02:30:00.000Z"),
+    });
+    const activeTerms = await context.terms.publish({
+      id: secondTerms.id,
+      publishedAt: new Date("2026-05-10T02:45:00.000Z"),
+    });
+
+    const retiredTerms = await context.terms.findById(firstTerms.id);
+    const currentActiveTerms = await context.terms.findActive();
+
+    expect(activeTerms.id).toBe(secondTerms.id);
+    expect(activeTerms.status).toBe("ACTIVE");
+    expect(retiredTerms?.status).toBe("RETIRED");
+    expect(currentActiveTerms?.id).toBe(secondTerms.id);
+  });
+
   it("persists and retrieves closeout snapshots", async () => {
     await context.pledges.createPending({
       merchantOrderNo: "ORDER-2001",

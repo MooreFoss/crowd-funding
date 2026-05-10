@@ -106,31 +106,27 @@ export function createTermsRepository(
     },
 
     async publish(input: PublishTermsVersionInput) {
+      const target = await this.findById(input.id);
+
+      if (!target) {
+        throw new Error(`Terms version ${input.id} was not found.`);
+      }
+
+      await executor.query(
+        `UPDATE terms_versions
+         SET status = 'RETIRED',
+             updated_at = $2
+         WHERE status = 'ACTIVE'
+           AND id <> $1`,
+        [input.id, input.publishedAt],
+      );
       const { rows } = await executor.query<TermsRow>(
-        `WITH target AS (
-           SELECT id
-           FROM terms_versions
-           WHERE id = $1
-         ),
-         retire_existing AS (
-           UPDATE terms_versions
-           SET status = 'RETIRED',
-               updated_at = $2
-           WHERE status = 'ACTIVE'
-             AND id <> $1
-             AND EXISTS (SELECT 1 FROM target)
-         ),
-         activate_target AS (
-           UPDATE terms_versions
-           SET status = 'ACTIVE',
-               published_at = $2,
-               updated_at = $2
-           WHERE id = $1
-             AND EXISTS (SELECT 1 FROM target)
-           RETURNING *
-         )
-         SELECT *
-         FROM activate_target`,
+        `UPDATE terms_versions
+         SET status = 'ACTIVE',
+             published_at = $2,
+             updated_at = $2
+         WHERE id = $1
+         RETURNING *`,
         [input.id, input.publishedAt],
       );
 

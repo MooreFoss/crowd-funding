@@ -1,5 +1,18 @@
-import { placeholderResponse } from "@/src/server/http/placeholderResponse";
+import { NextResponse } from "next/server";
 
-export function GET() {
-  return placeholderResponse("active public terms", ["GET"]);
+import { getActiveTermsVersion } from "@/src/application/admin";
+
+export async function GET() {
+  const activeTerms = await getActiveTermsVersion();
+
+  if (!activeTerms) {
+    return NextResponse.json(
+      {
+        error: "No active terms version was found.",
+      },
+      { status: 404 },
+    );
+  }
+
+  return NextResponse.json(activeTerms);
 }

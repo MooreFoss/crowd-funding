@@ -1,4 +1,10 @@
-export default function SettingsPage() {
+import { requireAdminPageSession } from "@/src/infrastructure/auth/session";
+
+export const dynamic = "force-dynamic";
+
+export default async function SettingsPage() {
+  await requireAdminPageSession();
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div>

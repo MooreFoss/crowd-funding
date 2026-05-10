@@ -1,4 +1,10 @@
-export default function SponsorPage() {
+import { getActiveTermsVersion } from "@/src/application/admin";
+
+export const dynamic = "force-dynamic";
+
+export default async function SponsorPage() {
+  const activeTerms = await getActiveTermsVersion();
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="text-center">
@@ -75,6 +81,14 @@ export default function SponsorPage() {
               <label htmlFor="terms" className="font-medium text-slate-700">
                 我已阅读并同意 <a href="/terms" className="text-blue-600 underline">用户协议</a> 与 <a href="/terms" className="text-blue-600 underline">隐私政策</a>
               </label>
+              <p className="mt-1 text-xs text-slate-400">
+                当前生效版本：
+                <span className="ml-1 text-slate-600">
+                  {activeTerms
+                    ? `${activeTerms.version} · ${activeTerms.title}`
+                    : "暂无生效条款"}
+                </span>
+              </p>
             </div>
           </div>
         </div>

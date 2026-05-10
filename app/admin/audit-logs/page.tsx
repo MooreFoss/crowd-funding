@@ -1,6 +1,11 @@
 import { RoutePlaceholder } from "@/src/ui/placeholders/RoutePlaceholder";
+import { requireAdminPageSession } from "@/src/infrastructure/auth/session";
 
-export default function AdminAuditLogsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminAuditLogsPage() {
+  await requireAdminPageSession();
+
   return (
     <RoutePlaceholder
       scope="admin"

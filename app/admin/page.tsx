@@ -1,62 +1,144 @@
-export default function AdminDashboard() {
-  const stats = [
-    { name: "待处理退款", value: "3 笔", color: "text-amber-600" },
-    { name: "今日新增赞助", value: "12 笔", color: "text-blue-600" },
-    { name: "系统健康度", value: "100%", color: "text-emerald-600" },
-  ];
+import Link from "next/link";
+
+import { getAdminSession } from "@/src/infrastructure/auth/session";
+
+export const dynamic = "force-dynamic";
+
+function getLoginErrorMessage(error: string | undefined) {
+  switch (error) {
+    case "invalid-credentials":
+      return "账号或密码错误，请重新输入。";
+    case "invalid-request":
+      return "请完整填写登录信息后再提交。";
+    default:
+      return null;
+  }
+}
+
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const session = await getAdminSession();
+
+  if (!session) {
+    const resolvedSearchParams = await searchParams;
+    const errorParam = resolvedSearchParams.error;
+    const error =
+      typeof errorParam === "string" ? getLoginErrorMessage(errorParam) : null;
+
+    return (
+      <div className="mx-auto flex min-h-[calc(100vh-64px-120px)] max-w-md items-center px-4 py-16 sm:px-6">
+        <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div>
+            <p className="text-sm font-medium text-blue-600">管理入口</p>
+            <h1 className="mt-2 text-3xl font-bold text-slate-900">
+              管理员登录
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-slate-500">
+              使用单管理员账号进入后台，维护条款版本、赞助记录、支出与退款流程。
+            </p>
+          </div>
+
+          {error ? (
+            <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <form action="/api/admin/session" method="post" className="mt-8 space-y-5">
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-slate-700"
+              >
+                管理员账号
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-slate-700"
+              >
+                管理员密码
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              登录后台
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">管理控制台概览</h1>
-        <p className="mt-1 text-sm text-slate-500">欢迎回来，管理员。以下是系统当前的关键指标。</p>
+        <p className="mt-1 text-sm text-slate-500">
+          当前登录账号：{session.username}。后台能力将按任务阶段逐步接入真实数据与操作流。
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        {stats.map((item) => (
-          <div key={item.name} className="overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-            <dt className="truncate text-sm font-medium text-slate-500">{item.name}</dt>
-            <dd className={`mt-2 text-3xl font-bold tracking-tight ${item.color}`}>{item.value}</dd>
-          </div>
-        ))}
+      <div className="grid gap-6 sm:grid-cols-3">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">会话状态</p>
+          <p className="mt-2 text-3xl font-semibold text-emerald-600">已登录</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">条款入口</p>
+          <p className="mt-2 text-3xl font-semibold text-slate-900">已启用</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">下个任务</p>
+          <p className="mt-2 text-3xl font-semibold text-slate-900">支付接入</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        {/* Quick Actions */}
-        <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900 mb-6">快速操作</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <button className="flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-50 p-4 hover:bg-blue-50 hover:text-blue-600 transition-colors border border-slate-100">
-              <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                <svg className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-              </div>
-              <span className="text-sm font-medium">录入支出</span>
-            </button>
-            <button className="flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-50 p-4 hover:bg-blue-50 hover:text-blue-600 transition-colors border border-slate-100">
-              <div className="size-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                <svg className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-              </div>
-              <span className="text-sm font-medium">更新条款</span>
-            </button>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">快速操作</h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Link
+              href="/admin/terms"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            >
+              维护条款版本
+            </Link>
+            <Link
+              href="/terms"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            >
+              查看用户侧条款
+            </Link>
           </div>
         </div>
 
-        {/* Recent Logs */}
-        <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900 mb-6">最近审计日志</h3>
-          <ul className="space-y-4">
-            <li className="flex gap-4 text-sm">
-              <span className="text-slate-400 tabular-nums shrink-0">10:45</span>
-              <p className="text-slate-600">管理员 <span className="font-medium text-slate-900">Admin</span> 修改了赞助记录 #1234 的昵称</p>
-            </li>
-            <li className="flex gap-4 text-sm">
-              <span className="text-slate-400 tabular-nums shrink-0">09:12</span>
-              <p className="text-slate-600">管理员 <span className="font-medium text-slate-900">Admin</span> 发起了一笔 ¥ 50.00 的退款</p>
-            </li>
-            <li className="flex gap-4 text-sm">
-              <span className="text-slate-400 tabular-nums shrink-0">昨日</span>
-              <p className="text-slate-600">系统自动发布了新版本条款 <span className="font-medium text-slate-900">v1.0.2</span></p>
-            </li>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">当前范围</h2>
+          <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+            <li>已接入管理员会话校验与退出登录。</li>
+            <li>已接入条款版本草稿创建、发布与公开查询。</li>
+            <li>后续任务将继续补齐支付、审核、退款与审计能力。</li>
           </ul>
         </div>
       </div>
