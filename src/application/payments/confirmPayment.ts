@@ -82,7 +82,7 @@ export async function confirmPaymentNotification(
     await logAuditEventIdempotent(
       {
         actorType: "SYSTEM",
-        actorId: "zpay",
+        actorId: "wechatpay",
         action: "PAYMENT_NOTIFICATION",
         targetType: "PLEDGE",
         targetId: current.id,

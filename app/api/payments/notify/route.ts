@@ -5,51 +5,42 @@ import {
   createConfiguredPaymentGateway,
 } from "@/src/application/payments";
 
-function readSearchPayload(request: Request) {
-  return Object.fromEntries(new URL(request.url).searchParams.entries());
-}
-
-async function readRequestPayload(request: Request) {
-  const contentType = request.headers.get("content-type") ?? "";
-
-  if (contentType.includes("application/json")) {
-    return await request.json().catch(() => ({}));
-  }
-
-  if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
-    const formData = await request.formData();
-    return Object.fromEntries(formData.entries());
-  }
-
-  return readSearchPayload(request);
-}
-
-async function handleNotification(request: Request) {
-  const payload = await readRequestPayload(request);
-  const normalizedPayload = Object.fromEntries(
-    Object.entries(payload).map(([key, value]) => [key, String(value)]),
-  );
+export async function POST(request: Request) {
+  const body = await request.text();
   const gateway = createConfiguredPaymentGateway();
 
-  if (!gateway.verifyNotification(normalizedPayload)) {
-    return new NextResponse("fail", { status: 400 });
-  }
-
-  if (normalizedPayload.out_trade_no && normalizedPayload.trade_status === "TRADE_SUCCESS") {
-    await confirmPaymentNotification({
-      merchantOrderNo: normalizedPayload.out_trade_no,
-      providerOrderNo: normalizedPayload.trade_no ?? null,
-      paid: true,
+  try {
+    const notification = await gateway.verifyAndDecryptNotification({
+      body,
+      headers: request.headers,
     });
+    const resource = notification.resource;
+
+    if (
+      notification.eventType === "TRANSACTION.SUCCESS" &&
+      resource.trade_state === "SUCCESS" &&
+      typeof resource.out_trade_no === "string"
+    ) {
+      await confirmPaymentNotification({
+        merchantOrderNo: resource.out_trade_no,
+        providerOrderNo:
+          typeof resource.transaction_id === "string"
+            ? resource.transaction_id
+            : null,
+        paid: true,
+      });
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Invalid WeChat Pay notification signature.",
+      },
+      { status: 400 },
+    );
   }
-
-  return new NextResponse("success", { status: 200 });
-}
-
-export function GET(request: Request) {
-  return handleNotification(request);
-}
-
-export function POST(request: Request) {
-  return handleNotification(request);
 }

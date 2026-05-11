@@ -43,6 +43,42 @@ export const serverEnv = {
   get zpayReturnUrl() {
     return readRequiredUrlEnv("ZPAY_RETURN_URL");
   },
+  get wechatPayAppId() {
+    return readRequiredStringEnv("WECHAT_PAY_APP_ID");
+  },
+  get wechatPayMchId() {
+    return readRequiredStringEnv("WECHAT_PAY_MCH_ID");
+  },
+  get wechatPayApiV3Key() {
+    return readRequiredStringEnv("WECHAT_PAY_API_V3_KEY");
+  },
+  get wechatPayMerchantSerialNo() {
+    return readRequiredStringEnv("WECHAT_PAY_MERCHANT_SERIAL_NO");
+  },
+  get wechatPayMerchantPrivateKeyPath() {
+    return readRequiredStringEnv("WECHAT_PAY_MERCHANT_PRIVATE_KEY_PATH");
+  },
+  get wechatPayPublicKeyId() {
+    return readRequiredStringEnv("WECHAT_PAY_PUBLIC_KEY_ID");
+  },
+  get wechatPayPublicKeyPath() {
+    return readRequiredStringEnv("WECHAT_PAY_PUBLIC_KEY_PATH");
+  },
+  get wechatPayNotifyUrl() {
+    return readRequiredUrlEnv("WECHAT_PAY_NOTIFY_URL");
+  },
+  get wechatPayRefundNotifyUrl() {
+    return readRequiredUrlEnv("WECHAT_PAY_REFUND_NOTIFY_URL");
+  },
+  get wechatMiniProgramAppSecret() {
+    return readRequiredStringEnv("WECHAT_MINI_PROGRAM_APP_SECRET");
+  },
+  get wechatMiniProgramUrlLink() {
+    return process.env.WECHAT_MINI_PROGRAM_URL_LINK ?? "";
+  },
+  get wechatMiniProgramUrlScheme() {
+    return process.env.WECHAT_MINI_PROGRAM_URL_SCHEME ?? "";
+  },
   get tencentSecretId() {
     return readRequiredStringEnv("TENCENT_SECRET_ID");
   },

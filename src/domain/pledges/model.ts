@@ -1,4 +1,7 @@
-export type PaymentChannel = "ZPAY_WECHAT_H5";
+export type PaymentChannel =
+  | "WECHATPAY_MINI_PROGRAM"
+  | "WECHATPAY_NATIVE"
+  | "ZPAY_WECHAT_H5";
 
 export type PledgeStatus =
   | "PENDING"

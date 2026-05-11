@@ -237,7 +237,7 @@ export async function confirmRefundNotification(
     await logAuditEventIdempotent(
       {
         actorType: "SYSTEM",
-        actorId: "zpay",
+        actorId: "wechatpay",
         action: "REFUND_NOTIFICATION",
         targetType: "REFUND",
         targetId: current.id,

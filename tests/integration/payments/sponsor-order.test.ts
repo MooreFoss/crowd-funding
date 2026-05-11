@@ -94,7 +94,7 @@ describe("sponsor-order flow", () => {
     }
   });
 
-  it("creates a pending sponsor order, binds the active terms version, and records the H5 redirect", async () => {
+  it("creates a Native sponsor order, binds the active terms version, and records the QR payload", async () => {
     const draftTerms = await context.terms.create({
       version: "v1.0.0",
       title: "Crowdfunding Terms",
@@ -108,15 +108,24 @@ describe("sponsor-order flow", () => {
     });
 
     const gateway: PaymentGateway = {
-      async createH5Payment() {
+      async createMiniProgramPayment() {
+        throw new Error("should not create JSAPI payment");
+      },
+      async createNativePayment(input) {
+        expect(input).toMatchObject({
+          merchantOrderNo: "ORDER-NATIVE-1001",
+          amountFen: 1_234,
+          clientIp: "127.0.0.1",
+          productName: "众筹赞助支持",
+        });
         return {
-          providerOrderNo: "ZPAY-ORDER-1001",
-          paymentRedirectUrl: "https://zpay.example.com/pay/h5-1001",
+          providerOrderNo: null,
+          codeUrl: "weixin://wxpay/bizpayurl?pr=native-1001",
         };
       },
       async queryOrder() {
         return {
-          providerOrderNo: "ZPAY-ORDER-1001",
+          providerOrderNo: "WECHATPAY-ORDER-1001",
           paid: false,
         };
       },
@@ -127,6 +136,7 @@ describe("sponsor-order flow", () => {
 
     const order = await createSponsorOrder(
       {
+        mode: "WEB_NATIVE",
         amount: "12.34",
         displayName: "Alice",
         message: "Thanks for building this.",
@@ -144,43 +154,158 @@ describe("sponsor-order flow", () => {
         },
         gateway,
         moderator: approvingModerator,
+        merchantOrderNoFactory: () => "ORDER-NATIVE-1001",
       },
     );
 
     const stored = await context.pledges.findByMerchantOrderNo(order.merchantOrderNo);
 
     expect(order.status).toBe("PAYING");
+    expect(order.mode).toBe("WEB_NATIVE");
     expect(order.amountFen).toBe(1_234);
-    expect(order.paymentRedirectUrl).toBe("https://zpay.example.com/pay/h5-1001");
+    expect(order.codeUrl).toBe("weixin://wxpay/bizpayurl?pr=native-1001");
     expect(order.termsVersionId).toBe(activeTerms.id);
     expect(stored).toMatchObject({
       status: "PAYING",
+      paymentChannel: "WECHATPAY_NATIVE",
       amountFen: 1_234,
       userKey: "session-user-1",
       publicName: "Alice",
       publicMessage: "Thanks for building this.",
       termsVersionId: activeTerms.id,
-      paymentRedirectUrl: "https://zpay.example.com/pay/h5-1001",
-      providerOrderNo: "ZPAY-ORDER-1001",
+      paymentRedirectUrl: "weixin://wxpay/bizpayurl?pr=native-1001",
+      providerOrderNo: null,
     });
   });
 
-  it("rejects invalid sponsor-order submissions before any pledge is created", async () => {
+  it("creates a mini program JSAPI sponsor order and requires openid", async () => {
+    const draftTerms = await context.terms.create({
+      version: "v1.0.0",
+      title: "Crowdfunding Terms",
+      body: "Terms body",
+      status: "DRAFT",
+      createdBy: "admin",
+    });
+    await context.terms.publish({
+      id: draftTerms.id,
+      publishedAt: new Date("2026-05-10T10:00:00.000Z"),
+    });
+
     const gateway: PaymentGateway = {
-      async createH5Payment() {
-        throw new Error("should not reach gateway");
+      async createMiniProgramPayment(input) {
+        expect(input.openid).toBe("openid-1001");
+        return {
+          providerOrderNo: null,
+          prepayId: "prepay-1001",
+          payment: {
+            timeStamp: "1760000000",
+            nonceStr: "nonce",
+            package: "prepay_id=prepay-1001",
+            signType: "RSA",
+            paySign: "signed",
+          },
+        };
+      },
+      async createNativePayment() {
+        throw new Error("should not create Native payment");
       },
       async queryOrder() {
-        throw new Error("should not query gateway");
+        return {
+          providerOrderNo: null,
+          paid: false,
+        };
       },
-      verifyNotification() {
-        return false;
+      async verifyAndDecryptNotification() {
+        throw new Error("not needed");
       },
     };
 
     await expect(
       createSponsorOrder(
         {
+          mode: "MINI_PROGRAM_JSAPI",
+          amount: "8.88",
+          displayName: "Mini",
+          message: "Mini program support",
+          termsAccepted: true,
+          userKey: "mini-user-1",
+          clientIp: "127.0.0.1",
+          userAgent: "MicroMessenger",
+        },
+        {
+          repositories: {
+            campaignState: context.campaignState,
+            moderationReviews: context.moderationReviews,
+            pledges: context.pledges,
+            terms: context.terms,
+          },
+          gateway,
+          moderator: approvingModerator,
+        },
+      ),
+    ).rejects.toThrow("Mini program openid is required.");
+
+    const order = await createSponsorOrder(
+      {
+        mode: "MINI_PROGRAM_JSAPI",
+        amount: "8.88",
+        displayName: "Mini",
+        message: "Mini program support",
+        termsAccepted: true,
+        userKey: "mini-user-1",
+        clientIp: "127.0.0.1",
+        userAgent: "MicroMessenger",
+        openid: "openid-1001",
+      },
+      {
+        repositories: {
+          campaignState: context.campaignState,
+          moderationReviews: context.moderationReviews,
+          pledges: context.pledges,
+          terms: context.terms,
+        },
+        gateway,
+        moderator: approvingModerator,
+      },
+    );
+    const stored = await context.pledges.findByMerchantOrderNo(order.merchantOrderNo);
+
+    expect(order).toMatchObject({
+      mode: "MINI_PROGRAM_JSAPI",
+      amountFen: 888,
+      status: "PAYING",
+      payment: {
+        package: "prepay_id=prepay-1001",
+        signType: "RSA",
+      },
+    });
+    expect(stored).toMatchObject({
+      paymentChannel: "WECHATPAY_MINI_PROGRAM",
+      paymentRedirectUrl: "prepay_id=prepay-1001",
+      status: "PAYING",
+    });
+  });
+
+  it("rejects invalid sponsor-order submissions before any pledge is created", async () => {
+    const gateway: PaymentGateway = {
+      async createMiniProgramPayment() {
+        throw new Error("should not reach gateway");
+      },
+      async createNativePayment() {
+        throw new Error("should not reach gateway");
+      },
+      async queryOrder() {
+        throw new Error("should not query gateway");
+      },
+      async verifyAndDecryptNotification() {
+        throw new Error("not needed");
+      },
+    };
+
+    await expect(
+      createSponsorOrder(
+        {
+          mode: "WEB_NATIVE",
           amount: "0",
           displayName: "Alice",
           message: "bad amount",
@@ -217,25 +342,29 @@ describe("sponsor-order flow", () => {
     });
 
     const gateway: PaymentGateway = {
-      async createH5Payment() {
+      async createMiniProgramPayment() {
+        throw new Error("should not create JSAPI payment");
+      },
+      async createNativePayment() {
         return {
-          providerOrderNo: "ZPAY-ORDER-2001",
-          paymentRedirectUrl: "https://zpay.example.com/pay/h5-2001",
+          providerOrderNo: "WECHATPAY-ORDER-2001",
+          codeUrl: "weixin://wxpay/bizpayurl?pr=native-2001",
         };
       },
       async queryOrder() {
         return {
-          providerOrderNo: "ZPAY-ORDER-2001",
+          providerOrderNo: "WECHATPAY-ORDER-2001",
           paid: true,
         };
       },
-      verifyNotification() {
-        return true;
+      async verifyAndDecryptNotification() {
+        throw new Error("not needed");
       },
     };
 
     const order = await createSponsorOrder(
       {
+        mode: "WEB_NATIVE",
         amount: "20.00",
         displayName: "Bob",
         message: "Idempotent callback",
@@ -259,7 +388,7 @@ describe("sponsor-order flow", () => {
     const firstConfirmation = await confirmPaymentNotification(
       {
         merchantOrderNo: order.merchantOrderNo,
-        providerOrderNo: "ZPAY-ORDER-2001",
+        providerOrderNo: "WECHATPAY-ORDER-2001",
         paid: true,
       },
       {
@@ -269,7 +398,7 @@ describe("sponsor-order flow", () => {
     const secondConfirmation = await confirmPaymentNotification(
       {
         merchantOrderNo: order.merchantOrderNo,
-        providerOrderNo: "ZPAY-ORDER-2001",
+        providerOrderNo: "WECHATPAY-ORDER-2001",
         paid: true,
       },
       {
@@ -285,7 +414,7 @@ describe("sponsor-order flow", () => {
       amountFen: 2_000,
       netAmountFen: 2_000,
       refundedFen: 0,
-      providerOrderNo: "ZPAY-ORDER-2001",
+      providerOrderNo: "WECHATPAY-ORDER-2001",
     });
   });
 });

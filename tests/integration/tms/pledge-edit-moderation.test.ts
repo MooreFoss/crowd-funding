@@ -84,21 +84,41 @@ async function createActiveTerms(context: TestContext) {
 }
 
 function createGateway(): PaymentGateway & {
-  createH5Payment: ReturnType<typeof vi.fn>;
+  createNativePayment: ReturnType<typeof vi.fn>;
 } {
   return {
-    createH5Payment: vi.fn(async () => ({
-      providerOrderNo: "ZPAY-ORDER-TMS",
-      paymentRedirectUrl: "https://zpay.example.com/pay/tms",
+    createMiniProgramPayment: vi.fn(async () => ({
+      providerOrderNo: null,
+      prepayId: "prepay-tms",
+      payment: {
+        timeStamp: "1760000000",
+        nonceStr: "nonce",
+        package: "prepay_id=prepay-tms",
+        signType: "RSA",
+        paySign: "signed",
+      },
+    })),
+    createNativePayment: vi.fn(async () => ({
+      providerOrderNo: "WECHATPAY-ORDER-TMS",
+      codeUrl: "weixin://wxpay/bizpayurl?pr=tms",
     })),
     async queryOrder() {
       return {
-        providerOrderNo: "ZPAY-ORDER-TMS",
+        providerOrderNo: "WECHATPAY-ORDER-TMS",
         paid: false,
       };
     },
-    verifyNotification() {
-      return true;
+    async createRefund() {
+      return {
+        providerRefundNo: null,
+        accepted: true,
+      };
+    },
+    async verifyAndDecryptNotification() {
+      return {
+        eventType: "TRANSACTION.SUCCESS",
+        resource: {},
+      };
     },
   };
 }
@@ -133,13 +153,14 @@ describe("pledge text moderation integration", () => {
     }
   });
 
-  it("rejects sponsor submissions before ZPAY order creation when public text fails TMS", async () => {
+  it("rejects sponsor submissions before WeChat Pay order creation when public text fails TMS", async () => {
     await createActiveTerms(context);
     const gateway = createGateway();
 
     await expect(
       createSponsorOrder(
         {
+          mode: "WEB_NATIVE",
           amount: "10.00",
           displayName: "Blocked nickname",
           message: "hello",
@@ -169,7 +190,7 @@ describe("pledge text moderation integration", () => {
       storedPledges[0]!.id,
     );
 
-    expect(gateway.createH5Payment).not.toHaveBeenCalled();
+    expect(gateway.createNativePayment).not.toHaveBeenCalled();
     expect(storedPledges[0]).toMatchObject({
       status: "FAILED",
       publicName: null,
@@ -186,7 +207,7 @@ describe("pledge text moderation integration", () => {
     const activeTerms = await createActiveTerms(context);
     const pledge = await context.pledges.createPending({
       merchantOrderNo: "ADMIN-EDIT-TMS-1",
-      paymentChannel: "ZPAY_WECHAT_H5",
+      paymentChannel: "WECHATPAY_NATIVE",
       userKey: "user-admin-edit",
       submittedName: "Clean name",
       publicName: "Clean name",
@@ -199,7 +220,7 @@ describe("pledge text moderation integration", () => {
     });
     await context.pledges.markPaymentOutcome({
       merchantOrderNo: pledge.merchantOrderNo,
-      providerOrderNo: "ZPAY-ORDER-EDIT",
+      providerOrderNo: "WECHATPAY-ORDER-EDIT",
       status: "PAID",
       paidAt: new Date("2026-05-10T09:01:00.000Z"),
     });
