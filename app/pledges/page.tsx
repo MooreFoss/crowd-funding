@@ -1,5 +1,6 @@
 import { listPledges } from "@/src/application/public";
 import { formatFenToYuan } from "@/src/shared";
+import { PublicListPagination } from "@/src/ui/components";
 
 export const dynamic = "force-dynamic";
 
@@ -7,8 +8,25 @@ function formatDate(value: string | null) {
   return new Date(value ?? "").toLocaleDateString("zh-CN");
 }
 
-export default async function PledgesPage() {
-  const pledges = await listPledges({ limit: 50, offset: 0 });
+function resolvePageNumber(value: string | string[] | undefined) {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const parsed = Number.parseInt(rawValue ?? "1", 10);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+export default async function PledgesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const pageNumber = resolvePageNumber(resolvedSearchParams.page);
+  const pageSize = 20;
+  const pledges = await listPledges({
+    limit: pageSize,
+    offset: (pageNumber - 1) * pageSize,
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -78,10 +96,11 @@ export default async function PledgesPage() {
               </div>
             </div>
           </div>
-          <div className="mt-6 text-sm text-slate-500">
-            当前已加载 {pledges.items.length} 条记录。
-            {pledges.page.hasMore ? " 还有更多记录可按分页继续获取。" : " 当前已显示全部公开记录。"}
-          </div>
+          <PublicListPagination
+            basePath="/pledges"
+            page={pledges.page}
+            totalLoaded={pledges.items.length}
+          />
         </>
       )}
     </div>

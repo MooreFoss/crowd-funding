@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { listExpenses } from "@/src/application/public";
 import { formatFenToYuan } from "@/src/shared";
+import { PublicListPagination } from "@/src/ui/components";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,25 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString("zh-CN");
 }
 
-export default async function ExpensesPage() {
-  const expenses = await listExpenses({ limit: 50, offset: 0 });
+function resolvePageNumber(value: string | string[] | undefined) {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const parsed = Number.parseInt(rawValue ?? "1", 10);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+export default async function ExpensesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const pageNumber = resolvePageNumber(resolvedSearchParams.page);
+  const pageSize = 20;
+  const expenses = await listExpenses({
+    limit: pageSize,
+    offset: (pageNumber - 1) * pageSize,
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -63,6 +81,11 @@ export default async function ExpensesPage() {
           <div className="mt-12 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm leading-6 text-slate-600">
             支出摘要始终保留在公开列表中；若某条记录没有公开详情或公开凭证，详情页会明确提示当前没有可展示的图片材料。
           </div>
+          <PublicListPagination
+            basePath="/expenses"
+            page={expenses.page}
+            totalLoaded={expenses.items.length}
+          />
         </>
       )}
     </div>

@@ -8,10 +8,12 @@ import { Pool } from "pg";
 
 import {
   createPledgeRepository,
+  createSystemSettingsRepository,
   createTermsRepository,
 } from "@/src/infrastructure/persistence/repositories";
 
 import { DELETE as deleteAdminSession, GET as getAdminSession, POST as postAdminSession } from "@/app/api/admin/session/route";
+import { GET as getAdminSettings, POST as postAdminSettings } from "@/app/api/admin/settings/route";
 import { GET as getAdminTerms, PATCH as patchAdminTerms, POST as postAdminTerms } from "@/app/api/admin/terms/route";
 import { GET as getActiveTerms } from "@/app/api/public/terms/active/route";
 
@@ -53,6 +55,7 @@ async function createTestContext() {
     pool,
     client,
     pledges: createPledgeRepository(client),
+    settings: createSystemSettingsRepository(client),
     terms: createTermsRepository(client),
   };
 }
@@ -355,6 +358,57 @@ describe("admin-session integration", () => {
       title: "Terms v1",
       body: "Version one body",
       status: "RETIRED",
+    });
+  });
+
+  it("persists editable site settings behind the admin session", async () => {
+    const unauthorizedSettings = await getAdminSettings(
+      createJsonRequest("http://localhost/api/admin/settings"),
+    );
+    expect(unauthorizedSettings.status).toBe(401);
+
+    const session = await login();
+    const saveResponse = await postAdminSettings(
+      createJsonRequest("http://localhost/api/admin/settings", {
+        method: "POST",
+        cookie: session.cookie,
+        body: {
+          siteTitle: "测试众筹平台",
+          faviconUrl: "/test-favicon.ico",
+          heroTitle: "透明资金池",
+        },
+      }),
+    );
+
+    expect(saveResponse.status).toBe(200);
+    expect(await saveResponse.json()).toMatchObject({
+      siteTitle: "测试众筹平台",
+      faviconUrl: "/test-favicon.ico",
+      heroTitle: "透明资金池",
+    });
+
+    const stored = await context.settings.getMany([
+      "site_title",
+      "favicon_url",
+      "hero_title",
+    ]);
+    expect(stored).toEqual({
+      site_title: "测试众筹平台",
+      favicon_url: "/test-favicon.ico",
+      hero_title: "透明资金池",
+    });
+
+    const readResponse = await getAdminSettings(
+      createJsonRequest("http://localhost/api/admin/settings", {
+        cookie: session.cookie,
+      }),
+    );
+
+    expect(readResponse.status).toBe(200);
+    expect(await readResponse.json()).toMatchObject({
+      siteTitle: "测试众筹平台",
+      faviconUrl: "/test-favicon.ico",
+      heroTitle: "透明资金池",
     });
   });
 });

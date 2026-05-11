@@ -1,12 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import {
+  DEFAULT_EDITABLE_SITE_SETTINGS,
+  getEditableSiteSettings,
+} from "@/src/application/admin";
 import Navbar from "@/src/ui/components/Navbar";
 import Footer from "@/src/ui/components/Footer";
 
-export const metadata: Metadata = {
-  title: "众筹系统 - 透明可追溯的资金管理平台",
-  description: "查看资金池余额、众筹记录与支出明细，支持在线赞助。",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getEditableSiteSettings().catch(
+    () => DEFAULT_EDITABLE_SITE_SETTINGS,
+  );
+
+  return {
+    title: settings.siteTitle,
+    description: "查看资金池余额、众筹记录与支出明细，支持在线赞助。",
+    icons: {
+      icon: settings.faviconUrl,
+    },
+  };
+}
 
 export default function RootLayout({
   children,

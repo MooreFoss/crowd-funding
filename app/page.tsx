@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { getEditableSiteSettings } from "@/src/application/admin";
 import { getSummary } from "@/src/application/public";
 import { formatFenToYuan, getStatusLabel } from "@/src/shared";
 
@@ -20,7 +21,10 @@ function getCampaignStatusMessage(status: string) {
 }
 
 export default async function HomePage() {
-  const summary = await getSummary();
+  const [summary, settings] = await Promise.all([
+    getSummary(),
+    getEditableSiteSettings(),
+  ]);
   const campaignStatusLabel = getStatusLabel(summary.campaignStatus);
 
   return (
@@ -33,7 +37,7 @@ export default async function HomePage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">
-                资金池总览
+                {settings.heroTitle}
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
                 {getCampaignStatusMessage(summary.campaignStatus)}
