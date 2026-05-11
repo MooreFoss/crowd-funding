@@ -36,14 +36,14 @@ export default async function ExpensesPage({
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">支出明细</h1>
           <p className="mt-2 text-sm text-slate-500">
-            每一笔资金的去向都清晰可见。我们承诺合理、高效地使用每一份支持。
+            资金去向清晰透明。我们承诺高效使用每一份支持。
           </p>
         </div>
       </div>
 
       {expenses.items.length === 0 ? (
         <div className="mt-10 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
-          暂无公开支出记录。
+          暂无支出记录。
         </div>
       ) : (
         <>
@@ -71,7 +71,7 @@ export default async function ExpensesPage({
                 <div className="mt-6 flex items-center justify-between text-xs font-medium">
                   <span className="text-blue-600">查看详情</span>
                   <span className="text-slate-400">
-                    {expense.detailVisibility === "PUBLIC" ? "公开详情" : "仅公开摘要"}
+                    {expense.detailVisibility === "PUBLIC" ? "详情公开" : "仅摘要"}
                   </span>
                 </div>
               </Link>
@@ -79,7 +79,7 @@ export default async function ExpensesPage({
           </div>
 
           <div className="mt-12 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm leading-6 text-slate-600">
-            支出摘要始终保留在公开列表中；若某条记录没有公开详情或公开凭证，详情页会明确提示当前没有可展示的图片材料。
+            摘要始终公开。若无公开凭证，详情页将明确说明。
           </div>
           <PublicListPagination
             basePath="/expenses"

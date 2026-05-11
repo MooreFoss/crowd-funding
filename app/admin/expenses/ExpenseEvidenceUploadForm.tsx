@@ -24,6 +24,14 @@ function resolveContentType(file: File) {
   return file.type || "application/octet-stream";
 }
 
+function EvidenceFieldHelp() {
+  return (
+    <p className="mt-1.5 text-xs leading-5 text-slate-500">
+      凭证标签用于给这份凭证起一个展示名，不填则使用文件名；右侧数字是展示顺序，数字越小越靠前。
+    </p>
+  );
+}
+
 async function createUploadTarget(file: File) {
   const response = await fetch("/api/admin/expenses/evidence/upload-url", {
     method: "POST",
@@ -165,19 +173,26 @@ export function ExpenseEvidenceUploadForm({
               type="number"
               min="0"
               defaultValue={defaultSortOrder}
+              placeholder="排序数字"
               aria-label="凭证排序"
             />
           ) : null}
+          <div className="sm:col-span-2">
+            <EvidenceFieldHelp />
+          </div>
         </div>
         {intent === "create" ? (
-          <Input
-            name="sortOrder"
-            type="number"
-            min="0"
-            defaultValue={defaultSortOrder}
-            placeholder="排序"
-            aria-label="凭证排序"
-          />
+          <div>
+            <Input
+              name="sortOrder"
+              type="number"
+              min="0"
+              defaultValue={defaultSortOrder}
+              placeholder="排序数字"
+              aria-label="凭证排序"
+            />
+            <EvidenceFieldHelp />
+          </div>
         ) : null}
         <div className={intent === "add-evidence" ? "grid gap-3 sm:grid-cols-2" : ""}>
           <Select

@@ -54,7 +54,7 @@ export function SponsorEntryClient({
   const [nativeOrder, setNativeOrder] = useState<NativeOrderResponse | null>(
     null,
   );
-  const [statusLabel, setStatusLabel] = useState("等待扫码支付");
+  const [statusLabel, setStatusLabel] = useState("等待支付");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const canRenderQrCode = useMemo(() => Boolean(nativeOrder?.codeUrl), [nativeOrder?.codeUrl]);
@@ -65,7 +65,7 @@ export function SponsorEntryClient({
     });
 
     if (!response.ok) {
-      throw new Error("暂时无法确认订单状态。");
+      throw new Error("状态确认中...");
     }
 
     const order = (await response.json()) as { status: string; statusLabel: string };
@@ -81,7 +81,7 @@ export function SponsorEntryClient({
           setError(
             nextError instanceof Error
               ? nextError.message
-              : "暂时无法确认订单状态。",
+              : "状态确认中...",
           );
         });
       }, 1500);
@@ -116,15 +116,15 @@ export function SponsorEntryClient({
       const body = await response.json();
 
       if (!response.ok) {
-        throw new Error(body.error ?? "创建支付订单失败。");
+        throw new Error(body.error ?? "创建订单失败");
       }
 
       setNativeOrder(body);
-      setStatusLabel("等待扫码支付");
+      setStatusLabel("等待支付");
       void pollOrder(body.merchantOrderNo);
     } catch (nextError) {
       setError(
-        nextError instanceof Error ? nextError.message : "创建支付订单失败。",
+        nextError instanceof Error ? nextError.message : "创建订单失败",
       );
     } finally {
       setSubmitting(false);
@@ -157,11 +157,11 @@ export function SponsorEntryClient({
             placeholder="匿名用户"
           />
           <Textarea
-            label="留言 (可选)"
+            label="留言"
             id="message"
             name="message"
             rows={3}
-            placeholder="想对我们说点什么？"
+            placeholder="说点什么？"
           />
           <div className="flex items-start">
             <div className="flex h-5 items-center">
@@ -175,7 +175,7 @@ export function SponsorEntryClient({
             </div>
             <div className="ml-3 text-sm">
               <label htmlFor="terms" className="font-medium text-slate-700">
-                我已阅读并同意{" "}
+                同意{" "}
                 <a href="/terms" className="text-blue-600 underline">
                   用户协议
                 </a>{" "}
@@ -185,7 +185,7 @@ export function SponsorEntryClient({
                 </a>
               </label>
               <p className="mt-1 text-xs text-slate-400">
-                当前生效版本：
+                生效版本：
                 <span className="ml-1 text-slate-600">
                   {activeTermsLabel}
                 </span>
@@ -209,7 +209,7 @@ export function SponsorEntryClient({
             ? "众筹已结束"
             : submitting
               ? "正在创建订单"
-              : "确认并去支付"}
+              : "去支付"}
         </button>
       </form>
 
@@ -228,16 +228,16 @@ export function SponsorEntryClient({
             </div>
             <div>
               <p className="text-sm font-semibold text-blue-600">
-                微信支付 Native 二维码
+                微信支付二维码
               </p>
               <h2 className="mt-2 text-2xl font-bold text-slate-900">
                 {statusLabel}
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                请使用微信扫码完成支付。支付最终状态以后端回调或查单结果为准。
+                请扫码支付，结果将自动同步。
               </p>
               <p className="mt-4 text-xs text-slate-400">
-                商户订单号：{nativeOrder.merchantOrderNo}
+                单号：{nativeOrder.merchantOrderNo}
               </p>
             </div>
           </div>

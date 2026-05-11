@@ -25,13 +25,13 @@ export default async function SettingsPage({
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">系统全局配置</h1>
-        <p className="mt-1 text-sm text-slate-500">管理站点基础信息与展示文本。</p>
+        <p className="mt-1 text-sm text-slate-500">管理站点基础信息。</p>
       </div>
 
       {error ? (
         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error === "invalid-request"
-            ? "请完整填写站点标题、图标地址、首页标题和资金池描述。"
+            ? "请完整填写所有必填项。"
             : error}
         </div>
       ) : null}
@@ -46,7 +46,7 @@ export default async function SettingsPage({
         <section className="bg-white rounded-3xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
           <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-lg font-semibold text-slate-900">站点基础信息</h3>
-            <p className="text-sm text-slate-500">这些设置将直接影响用户端页面标签与整体品牌展示。</p>
+            <p className="text-sm text-slate-500">影响用户端页面展示。</p>
           </div>
           <div className="p-6 space-y-6">
             <Input
@@ -83,7 +83,7 @@ export default async function SettingsPage({
 
         <div className="flex justify-end gap-4">
           <a href="/admin/settings" className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
-            放弃修改
+            取消
           </a>
           <button type="submit" className="rounded-xl bg-slate-900 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">
             保存配置

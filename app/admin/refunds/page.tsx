@@ -34,7 +34,7 @@ export default async function AdminRefundsPage({
         <div>
           <h1 className="text-2xl font-bold text-slate-900">退款与关停</h1>
           <p className="mt-1 text-sm text-slate-500">
-            发起单笔退款，关闭众筹，并基于关闭快照创建按比例批量退款。
+            管理退款与众筹关停。
           </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -62,7 +62,7 @@ export default async function AdminRefundsPage({
           <p className="mt-2 text-xs text-slate-500">
             {snapshot
               ? `快照时间：${formatTimestamp(snapshot.capturedAt)}`
-              : "仍可接收赞助"}
+              : "接收赞助中"}
           </p>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -97,7 +97,7 @@ export default async function AdminRefundsPage({
               name="pledgeId"
               required
             >
-              <option value="">选择可退款订单</option>
+              <option value="">选择订单</option>
               {refundCenter.refundablePledges.map((pledge) => (
                 <option key={pledge.id} value={pledge.id}>
                   {pledge.merchantOrderNo} · {pledge.displayName} · {formatFenToYuan(pledge.netAmountFen)}
@@ -146,7 +146,7 @@ export default async function AdminRefundsPage({
               disabled={Boolean(snapshot)}
               className="inline-flex w-full items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {snapshot ? "已生成关闭快照" : "结束众筹并冻结快照"}
+              {snapshot ? "已生成快照" : "结束众筹"}
             </button>
           </form>
           <form action="/api/admin/funding/batch-refunds" method="post" className="mt-4">
@@ -155,7 +155,7 @@ export default async function AdminRefundsPage({
               disabled={!snapshot}
               className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              创建按比例批量退款
+              按比例批量退款
             </button>
           </form>
         </div>
@@ -167,7 +167,7 @@ export default async function AdminRefundsPage({
         </div>
         {refundCenter.refunds.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
-            暂无退款记录。
+            暂无记录
           </div>
         ) : (
           <div className="overflow-x-auto">

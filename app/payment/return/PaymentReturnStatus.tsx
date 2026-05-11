@@ -76,30 +76,30 @@ export function PaymentReturnStatus({
     }
 
     if (!order || !FINAL_STATUSES.has(order.status)) {
-      return "我们正在等待支付平台返回最终确认，请勿重复创建订单。";
+      return "正在确认支付状态，请稍候。";
     }
 
     if (order.status === "PAID") {
-      return "支付已确认成功，资金池与公开记录会自动同步。";
+      return "支付成功，数据已同步。";
     }
 
     if (order.status === "CANCELLED") {
-      return "支付已取消。您可以返回赞助页重新发起。";
+      return "支付取消。可返回重新发起。";
     }
 
-    return "支付未成功完成。您可以返回赞助页重新尝试。";
+    return "支付未成功。可返回重试。";
   }, [error, order]);
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
       <div className="text-center">
-        <p className="text-sm font-medium text-blue-600">支付状态回显</p>
+        <p className="text-sm font-medium text-blue-600">支付状态</p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900">
           {order?.statusLabel ?? "处理中"}
         </h1>
         <p className="mt-4 text-sm leading-6 text-slate-500">{description}</p>
         <p className="mt-4 text-xs text-slate-400">
-          商户订单号：{merchantOrderNo}
+          单号：{merchantOrderNo}
         </p>
       </div>
 
@@ -115,7 +115,7 @@ export function PaymentReturnStatus({
             href="/sponsor"
             className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            返回赞助页
+            去赞助
           </Link>
         ) : null}
       </div>

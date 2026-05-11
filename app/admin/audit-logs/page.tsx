@@ -25,15 +25,15 @@ export default async function AdminAuditLogsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">审计日志</h1>
           <p className="mt-1 text-sm text-slate-500">
-            追踪管理操作、支付通知、退款通知、审核和关停相关事件。
+            查看系统操作流水记录。
           </p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-          当前加载：
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+          共计：
           <span className="ml-2 font-semibold text-slate-900">
             {logs.items.length} 条
           </span>
-        </div>
+          </div>
       </div>
 
       <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">

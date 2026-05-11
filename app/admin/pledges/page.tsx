@@ -82,7 +82,7 @@ export default async function AdminPledgesPage({
         <div>
           <h1 className="text-2xl font-bold text-slate-900">赞助记录管理</h1>
           <p className="mt-1 text-sm text-slate-500">
-            查看支付订单、公开展示文本与 TMS 审核状态；修改昵称或留言会重新审核，通过前不会覆盖公开版本。
+            查看订单与审核状态；修改后将重新审核。
           </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -160,14 +160,14 @@ export default async function AdminPledgesPage({
                           <span className="text-xs text-slate-500">昵称</span>
                           <ModerationBadge
                             review={pledge.moderation.displayName}
-                            fallback="未提交审核"
+                            fallback="未审核"
                           />
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs text-slate-500">留言</span>
                           <ModerationBadge
                             review={pledge.moderation.message}
-                            fallback="未提交审核"
+                            fallback="未审核"
                           />
                         </div>
                       </td>
@@ -193,7 +193,7 @@ export default async function AdminPledgesPage({
                             type="submit"
                             className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
                           >
-                            {hasRecoverableReview ? "重试审核并保存" : "保存并审核"}
+                            {hasRecoverableReview ? "重试并保存" : "保存并提交审核"}
                           </button>
                         </form>
                       </td>

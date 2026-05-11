@@ -26,7 +26,7 @@ export default async function SponsorPage({
           发起赞助
         </h1>
         <p className="mt-4 text-lg text-slate-500">
-          感谢您的支持。您的每一份赞助都将用于项目的持续建设与维护。
+          感谢支持。赞助将用于项目的建设与维护。
         </p>
       </div>
 
@@ -38,7 +38,7 @@ export default async function SponsorPage({
 
       {sponsorshipClosed ? (
         <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          众筹已结束，当前不能创建新的赞助订单。
+          众筹已结束，暂停接收新赞助。
         </div>
       ) : null}
 

@@ -12,9 +12,9 @@ export const dynamic = "force-dynamic";
 function getLoginErrorMessage(error: string | undefined) {
   switch (error) {
     case "invalid-credentials":
-      return "账号或密码错误，请重新输入。";
+      return "账号或密码错误";
     case "invalid-request":
-      return "请完整填写登录信息后再提交。";
+      return "请填写登录信息";
     default:
       return null;
   }
@@ -42,7 +42,7 @@ export default async function AdminDashboardPage({
               管理员登录
             </h1>
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              使用单管理员账号进入后台，维护条款版本、赞助记录、支出与退款流程。
+              管理条款、赞助记录、支出与退款。
             </p>
           </div>
 
@@ -100,9 +100,9 @@ export default async function AdminDashboardPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">管理控制台概览</h1>
+        <h1 className="text-2xl font-bold text-slate-900">控制台概览</h1>
         <p className="mt-1 text-sm text-slate-500">
-          当前登录账号：{session.username}。指标来自当前权威数据。
+          当前账号：{session.username}
         </p>
       </div>
 
@@ -135,13 +135,13 @@ export default async function AdminDashboardPage({
               href="/admin/refunds"
               className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
             >
-              退款与关停
+              退款关停
             </Link>
             <Link
               href="/admin/audit-logs"
               className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
             >
-              查看审计日志
+              审计日志
             </Link>
           </div>
         </div>

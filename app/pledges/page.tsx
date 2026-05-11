@@ -34,14 +34,14 @@ export default async function PledgesPage({
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">众筹记录</h1>
           <p className="mt-2 text-sm text-slate-500">
-            所有已支付成功的赞助记录均在此公开。透明度是我们的核心价值。
+            所有支付成功的赞助记录在此公开。
           </p>
         </div>
       </div>
 
       {pledges.items.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
-          暂无公开赞助记录。
+          暂无记录
         </div>
       ) : (
         <>

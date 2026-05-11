@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 function getCampaignStatusMessage(status: string) {
   switch (status) {
     case "CLOSING":
-      return "当前众筹已关闭，新的赞助入口已停用，结算与退款流程正在准备。";
+      return "众筹已关闭，结算与退款准备中。";
     case "REFUNDING":
-      return "当前众筹正在执行退款流程，公开数据仍会继续更新。";
+      return "正在执行退款，数据持续更新。";
     case "ENDED":
     case "SETTLED":
-      return "当前众筹已经结束，公开页面仅保留资金与支出公示。";
+      return "众筹已结束，保留资金与支出公示。";
     default:
-      return "当前众筹正常进行中，公开数据将随支付与支出实时更新。";
+      return "众筹进行中，数据实时更新。";
   }
 }
 
@@ -37,7 +37,7 @@ export default async function HomePage() {
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-4">
             <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
-              当前状态：{campaignStatusLabel}
+              状态：{campaignStatusLabel}
             </div>
             <div>
               <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">
@@ -48,7 +48,7 @@ export default async function HomePage() {
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">当前资金池余额</p>
+              <p className="text-sm font-medium text-slate-500">当前余额</p>
               <p className="mt-2 text-5xl font-semibold tracking-tight text-slate-900 sm:text-6xl">
                 {formatFenToYuan(summary.balanceFen)}
               </p>
@@ -61,7 +61,7 @@ export default async function HomePage() {
                 href="/sponsor"
                 className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
               >
-                立即赞助支持
+                立即赞助
               </Link>
             ) : (
               <button
@@ -77,26 +77,26 @@ export default async function HomePage() {
               href="/pledges"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              查看众筹记录
+              众筹记录
             </Link>
             <Link
               href="/expenses"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              查看支出明细
+              支出明细
             </Link>
           </div>
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-sm text-slate-500">累计赞助总额</p>
+            <p className="text-sm text-slate-500">累计赞助</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">
               {formatFenToYuan(summary.totalRaisedFen)}
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-sm text-slate-500">累计支出总额</p>
+            <p className="text-sm text-slate-500">累计支出</p>
             <p className="mt-2 text-2xl font-semibold text-slate-900">
               {formatFenToYuan(summary.totalExpenseFen)}
             </p>

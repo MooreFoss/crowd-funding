@@ -32,7 +32,7 @@ export default async function AdminLayout({
     <div className="flex flex-col lg:flex-row min-h-[calc(100vh-64px-120px)]">
       <aside className="w-full lg:w-64 bg-white border-r border-slate-200 p-6">
         <nav className="space-y-1">
-          <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">管理菜单</p>
+          <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">管理</p>
           {navigation.map((item) => (
             <Link
               key={item.name}
@@ -47,12 +47,12 @@ export default async function AdminLayout({
               href="/"
               className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
             >
-              返回用户端
+              返回前台
             </Link>
           </div>
           <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-              当前会话
+              会话
             </p>
             <p className="mt-2 text-sm font-semibold text-slate-900">
               {session.username}
@@ -63,7 +63,7 @@ export default async function AdminLayout({
                 type="submit"
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-white"
               >
-                退出登录
+                退出
               </button>
             </form>
           </div>

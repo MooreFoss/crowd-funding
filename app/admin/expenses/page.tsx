@@ -38,7 +38,7 @@ export default async function AdminExpensesPage({
         <div>
           <h1 className="text-2xl font-bold text-slate-900">支出记录管理</h1>
           <p className="mt-1 text-sm text-slate-500">
-            新增、编辑支出记录，并维护公开凭证与仅审计凭证。
+            管理支出记录及凭证。
           </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -89,13 +89,13 @@ export default async function AdminExpensesPage({
           />
           <div className="mt-5 grid gap-5 md:grid-cols-2">
             <Select
-              label="详情可见性"
+              label="可见性"
               id="detailVisibility"
               name="detailVisibility"
               defaultValue="PUBLIC"
               options={[
-                { value: "PUBLIC", label: "公开详情" },
-                { value: "AUDIT_ONLY", label: "仅审计详情" },
+                { value: "PUBLIC", label: "公开" },
+                { value: "AUDIT_ONLY", label: "仅审计" },
               ]}
             />
           </div>
@@ -105,7 +105,7 @@ export default async function AdminExpensesPage({
       <section className="space-y-5">
         {expenses.items.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
-            暂无支出记录。
+            暂无记录
           </div>
         ) : (
           expenses.items.map((expense) => (
@@ -147,10 +147,10 @@ export default async function AdminExpensesPage({
                 <Select
                   name="detailVisibility"
                   defaultValue={expense.detailVisibility}
-                  aria-label="详情可见性"
+                  aria-label="可见性"
                   options={[
-                    { value: "PUBLIC", label: "公开详情" },
-                    { value: "AUDIT_ONLY", label: "仅审计详情" },
+                    { value: "PUBLIC", label: "公开" },
+                    { value: "AUDIT_ONLY", label: "仅审计" },
                   ]}
                 />
                 <Input
@@ -212,6 +212,7 @@ export default async function AdminExpensesPage({
                         </div>
                         <div className="mt-3 grid gap-3 sm:grid-cols-4">
                           <Input
+                            label="凭证标签"
                             name="label"
                             defaultValue={evidence.label ?? ""}
                             placeholder="标签"
@@ -219,6 +220,7 @@ export default async function AdminExpensesPage({
                             aria-label="标签"
                           />
                           <Input
+                            label="排序"
                             name="sortOrder"
                             type="number"
                             min="0"
@@ -226,6 +228,7 @@ export default async function AdminExpensesPage({
                             aria-label="排序"
                           />
                           <Select
+                            label="可见性"
                             name="visibility"
                             defaultValue={evidence.visibility}
                             aria-label="可见性"
@@ -234,6 +237,9 @@ export default async function AdminExpensesPage({
                               { value: "AUDIT_ONLY", label: "仅审计" },
                             ]}
                           />
+                          <p className="text-xs leading-5 text-slate-500 sm:col-span-4">
+                            标签即展示名；数字越小越靠前。
+                          </p>
                         </div>
                         <button
                           type="submit"

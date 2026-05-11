@@ -54,11 +54,11 @@ export default async function AdminTermsPage({
         <div>
           <h1 className="text-2xl font-bold text-slate-900">条款版本维护</h1>
           <p className="mt-1 text-sm text-slate-500">
-            管理用户协议、隐私政策与退款说明的版本化内容，并确保只有一个公开生效版本。
+            管理用户协议、隐私政策与退款说明。
           </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-          当前生效版本：
+          当前生效：
           <span className="ml-2 font-semibold text-slate-900">
             {activeTerms ? `${activeTerms.version} · ${activeTerms.title}` : "暂无"}
           </span>
@@ -97,7 +97,7 @@ export default async function AdminTermsPage({
             id="body"
             name="body"
             rows={12}
-            placeholder="请按换行维护用户协议、隐私政策与退款说明正文。"
+            placeholder="按行输入协议、政策及退款说明。"
             required
           />
           <button
@@ -113,7 +113,7 @@ export default async function AdminTermsPage({
         <h2 className="text-lg font-semibold text-slate-900">版本列表</h2>
         {termsList.items.length === 0 ? (
           <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
-            暂无条款版本，请先创建第一份草稿。
+            暂无条款版本。
           </div>
         ) : (
           <div className="mt-6 space-y-4">

@@ -38,7 +38,7 @@ export default async function ExpenseDetailPage({
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-6">
         <Link href="/expenses" className="text-sm font-medium text-blue-600">
-          返回支出列表
+          返回列表
         </Link>
       </div>
 
@@ -60,7 +60,7 @@ export default async function ExpenseDetailPage({
               {formatFenToYuan(expense.amountFen)}
             </p>
             <p className="mt-2 text-xs text-slate-400">
-              记录时间：{formatDate(expense.createdAt)}
+              时间：{formatDate(expense.createdAt)}
             </p>
           </div>
         </div>
@@ -69,13 +69,13 @@ export default async function ExpenseDetailPage({
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">公开凭证</h2>
             <span className="text-xs text-slate-400">
-              {expense.detailVisibility === "PUBLIC" ? "公开详情" : "仅公开摘要"}
+              {expense.detailVisibility === "PUBLIC" ? "详情公开" : "仅摘要"}
             </span>
           </div>
 
           {expense.evidence.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
-              暂无公开凭证
+              暂无凭证
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
