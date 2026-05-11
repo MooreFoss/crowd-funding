@@ -6,11 +6,12 @@ Set all values from `.env.example` in the production secret store:
 
 - PostgreSQL: `DATABASE_URL`
 - Admin: `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `SESSION_SECRET`
-- ZPAY: `ZPAY_MCH_ID`, `ZPAY_KEY`, `ZPAY_NOTIFY_URL`, `ZPAY_RETURN_URL`
+- WeChat Pay: `WECHAT_PAY_APP_ID`, `WECHAT_PAY_MCH_ID`, `WECHAT_PAY_API_V3_KEY`, `WECHAT_PAY_MERCHANT_SERIAL_NO`, `WECHAT_PAY_MERCHANT_PRIVATE_KEY_PATH`, `WECHAT_PAY_PUBLIC_KEY_ID`, `WECHAT_PAY_PUBLIC_KEY_PATH`, `WECHAT_PAY_NOTIFY_URL`, `WECHAT_PAY_REFUND_NOTIFY_URL`
+- WeChat Mini Program: `WECHAT_MINI_PROGRAM_APP_SECRET`, `WECHAT_MINI_PROGRAM_URL_LINK`, `WECHAT_MINI_PROGRAM_URL_SCHEME`, `NEXT_PUBLIC_WECHAT_MINI_PROGRAM_APP_ID`, `NEXT_PUBLIC_WECHAT_MINI_PROGRAM_PATH`
 - Tencent TMS: `TENCENT_SECRET_ID`, `TENCENT_SECRET_KEY`, `TENCENT_TMS_REGION`
 - MinIO: `MINIO_ENDPOINT`, `MINIO_BUCKET`, `MINIO_REGION`, `MINIO_ACCESS_KEY_ID`, `MINIO_SECRET_ACCESS_KEY`, `PUBLIC_ASSET_BASE_URL`
 
-Leave `TENCENT_TMS_ENDPOINT` unset in production unless traffic is intentionally routed through a private proxy.
+Leave `TENCENT_TMS_ENDPOINT` and `WECHAT_PAY_API_ENDPOINT` unset in production unless traffic is intentionally routed through a private proxy. Do not place merchant private keys, APIv3 keys, AppSecret, or object-storage secrets in source control.
 
 ## Database
 
@@ -26,26 +27,28 @@ The command applies migrations in filename order, records applied files in `sche
 pnpm start:prod
 ```
 
-The current migration order is:
-
-1. `src/infrastructure/persistence/migrations/0001_core.sql`
-2. `src/infrastructure/persistence/migrations/0002_assets_and_moderation.sql`
-
 Take a database backup before every migration and before campaign closeout.
 
-## Callback URLs
+## WeChat Pay
 
-Configure ZPAY with:
+Configure the merchant platform and Mini Program binding before accepting traffic:
 
 - Payment notify: `${PUBLIC_ORIGIN}/api/payments/notify`
-- Payment return: `${PUBLIC_ORIGIN}/payment/return`
 - Refund notify: `${PUBLIC_ORIGIN}/api/refunds/notify`
+- Mini Program AppID must be bound to the merchant account.
+- APIv3 key must be 32 bytes and match the merchant platform configuration.
+- Merchant private key path must point to a readable local file on the server.
+- WeChat Pay public key or platform certificate path must point to the public key used for callback signature verification.
 
-Callbacks must reach the same database as the web app. Repeated callbacks are expected and must not be blocked by edge caching.
+Callbacks must reach the same database as the web app. Repeated callbacks are expected and must not be blocked by edge caching. Payment success is authoritative only after signature verification, AES-GCM resource decryption, and `trade_state=SUCCESS`, or after a server-side order query returns `SUCCESS`.
+
+## Mini Program
+
+Configure Mini Program request legal domains for the production API origin. Mobile Web sponsorship uses URL Link first and URL Scheme as fallback; configure both when possible. The Mini Program sponsorship page must call the backend order route, then call `wx.requestPayment` with the returned `timeStamp`, `nonceStr`, `package`, `signType`, and `paySign`.
 
 ## Key Rotation
 
-Rotate ZPAY, TMS, and MinIO keys by deploying new secrets first, then smoke-testing payment creation, TMS approval, upload URL creation, and refund submission in a staging environment.
+Rotate WeChat Pay, TMS, and MinIO keys by deploying new secrets first, then smoke-testing Native order creation, JSAPI order creation in staging, callback verification, TMS approval, upload URL creation, and refund submission.
 
 ## Evidence Storage
 
@@ -57,14 +60,18 @@ Run before a release candidate:
 
 ```bash
 pnpm check
-pnpm test:e2e -- public-browse sponsor-h5 expense-evidence admin-smoke closeout-refunds
+pnpm test:integration -- tests/integration/payments/wechatpay-flow.test.ts
+pnpm test:integration -- tests/integration/payments/sponsor-order.test.ts
+pnpm test:e2e -- tests/e2e/sponsor-wechatpay.spec.ts
 ```
 
 Manual checks:
 
 1. Admin login succeeds and audit log records `ADMIN_LOGIN`.
 2. Public summary, pledge list, expense list, and expense detail load from PostgreSQL.
-3. Sponsor form rejects unapproved TMS text and creates a ZPAY H5 redirect for approved text.
-4. Expense detail shows only public evidence images.
-5. Single refund creates a processing refund and repeated success notification does not double deduct.
-6. Campaign close disables new sponsorship and creates deterministic proportional child refunds.
+3. Desktop sponsor form creates a WeChat Pay Native QR code order.
+4. Mobile sponsor form opens the Mini Program jump page and does not create a web payment order.
+5. Mini Program can open the crowdfunding entry, create a JSAPI order, and reach `wx.requestPayment`.
+6. Payment callback mock updates a pledge to `PAID`; repeated callback is idempotent.
+7. Single refund creates a processing refund and repeated success notification does not double deduct.
+8. Campaign close disables new sponsorship and creates deterministic proportional child refunds.

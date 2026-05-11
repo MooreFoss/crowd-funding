@@ -1,6 +1,6 @@
 # 项目骨架说明
 
-本项目按 `docs/SRS.md` 的首期范围实现单活动众筹生命周期：公开展示、ZPAY 微信 H5 支付、腾讯云 TMS 审核、支出凭证、退款、关停结算和审计。
+本项目按 `docs/SRS.md` 的首期范围实现单活动众筹生命周期：公开展示、微信官方支付、腾讯云 TMS 审核、支出凭证、退款、关停结算和审计。
 
 ## 路由层
 
@@ -16,10 +16,11 @@
 
 - `src/domain/**`：领域模型、领域规则、状态模型和仓储接口。
 - `src/application/**`：用户端、管理端、支付、退款、关停和审核应用用例。
-- `src/infrastructure/**`：鉴权、持久化、ZPAY、腾讯云 TMS、MinIO、审计等外部依赖适配层。
+- `src/infrastructure/**`：鉴权、持久化、微信支付、腾讯云 TMS、MinIO、审计等外部依赖适配层。
 - `src/infrastructure/persistence/client.ts`：PostgreSQL 连接池入口，从服务端环境变量读取 `DATABASE_URL`。
 - `src/infrastructure/persistence/migrations/**`：数据库迁移，按文件名顺序执行。
-- `src/infrastructure/payments/zpay.ts`：ZPAY 微信 H5 支付、订单查询和退款适配器。
+- `src/infrastructure/payments/wechatPay.ts`：微信支付 API v3 签名、JSAPI、Native、查单、退款和通知解密适配器。
+- `src/infrastructure/payments/zpay.ts`：历史 ZPAY 兼容适配器，不是默认生产赞助路径。
 - `src/infrastructure/moderation/tencentTms.ts`：腾讯云 TMS 文本审核适配器。
 - `src/infrastructure/storage/minio.ts`：MinIO/S3 兼容凭证图片上传 URL 适配器。
 - `src/infrastructure/audit/logger.ts`：审计事件写入入口。
@@ -27,7 +28,7 @@
 - `src/ui/**`：页面组件和展示层组件。
 - `src/server/**`：服务端 HTTP 工具和路由共享基础设施。
 - `src/config/**`：路由、功能开关、运行配置等项目配置。
-- `src/config/env.ts`：集中校验服务端环境变量，覆盖数据库、管理员认证、ZPAY、腾讯云 TMS、MinIO 和公开静态资源基地址。
+- `src/config/env.ts`：集中校验服务端环境变量，覆盖数据库、管理员认证、微信支付、腾讯云 TMS、MinIO 和公开静态资源基地址。
 - `src/shared/**`：跨层共享的非业务工具。
 - `src/shared/money.ts`：金额解析与人民币格式化工具，统一使用“分”为内部单位。
 - `src/shared/status.ts`：支付、退款、审核、众筹活动等常见状态码到中文标签的共享映射。
