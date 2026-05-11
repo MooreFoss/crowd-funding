@@ -37,12 +37,12 @@ export default async function TermsPage() {
           </div>
         ) : (
           <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
-            管理端尚未发布条款版本。当前页面会在首个版本生效后自动展示最新公开内容。
+            暂无生效的政策条款。请稍后再试。
           </div>
         )}
 
         <div className="mt-12 border-t border-slate-100 pt-6 text-xs text-slate-400">
-          对外展示内容始终与当前生效版本保持一致。
+          以上为当前公示的最新生效版本。
         </div>
       </div>
     </div>

@@ -113,6 +113,37 @@ test.describe("wechatpay sponsor entry", () => {
     await expect(page).not.toHaveURL(/mini-program-jump/);
   });
 
+  test("mobile home sponsor button opens the mini program jump page immediately", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "userAgent", {
+        value:
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148",
+        configurable: true,
+      });
+    });
+    let nativeOrderCalled = false;
+
+    await page.route("**/api/sponsorship/native-orders", (route) => {
+      nativeOrderCalled = true;
+      void route.abort();
+    });
+
+    await page.goto("/");
+    await page
+      .locator("main")
+      .getByRole("link", { name: "立即赞助" })
+      .click();
+
+    await expect(page).toHaveURL(/\/sponsor\/mini-program-jump/);
+    await expect(
+      page.getByRole("heading", { name: "打开小程序继续支付" }),
+    ).toBeVisible();
+    expect(nativeOrderCalled).toBe(false);
+  });
+
   test("mobile sponsor flow opens the mini program jump page without creating Native orders", async ({
     page,
   }) => {

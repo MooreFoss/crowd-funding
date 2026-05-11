@@ -105,9 +105,6 @@ export default async function ExpenseDetailPage({
                         </a>
                         <figcaption className="flex items-center justify-between px-4 py-3 text-sm text-slate-600">
                           <span>{title}</span>
-                          <span className="text-xs text-slate-400">
-                            #{evidence.sortOrder}
-                          </span>
                         </figcaption>
                       </figure>
                     );

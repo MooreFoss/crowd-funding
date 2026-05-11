@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { SponsorActionLink } from "./SponsorActionLink";
+
 type NavbarProps = {
   siteTitle: string;
   faviconUrl: string;
@@ -47,12 +49,11 @@ export default function Navbar({ siteTitle, faviconUrl }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link 
-            href="/sponsor" 
+          <SponsorActionLink
             className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-95"
           >
             立即赞助
-          </Link>
+          </SponsorActionLink>
         </div>
       </div>
     </nav>

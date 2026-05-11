@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getEditableSiteSettings } from "@/src/application/admin";
 import { getSummary } from "@/src/application/public";
 import { formatFenToYuan, getStatusLabel } from "@/src/shared";
+import { SponsorActionLink } from "@/src/ui/components";
 
 export const dynamic = "force-dynamic";
 
@@ -57,12 +58,11 @@ export default async function HomePage() {
 
           <div className="flex flex-wrap gap-3">
             {summary.canSponsor ? (
-              <Link
-                href="/sponsor"
+              <SponsorActionLink
                 className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
               >
                 立即赞助
-              </Link>
+              </SponsorActionLink>
             ) : (
               <button
                 type="button"
