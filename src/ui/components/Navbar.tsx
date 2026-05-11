@@ -32,12 +32,6 @@ export default function Navbar() {
           >
             立即赞助
           </Link>
-          <Link 
-            href="/admin" 
-            className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
-          >
-            管理入口
-          </Link>
         </div>
       </div>
     </nav>

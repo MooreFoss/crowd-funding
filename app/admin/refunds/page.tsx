@@ -1,6 +1,7 @@
 import { listRefundCenter } from "@/src/application/refunds";
 import { requireAdminPageSession } from "@/src/infrastructure/auth/session";
 import { formatFenToYuan, getStatusLabel } from "@/src/shared";
+import { Input, Select, Textarea } from "@/src/ui/components";
 
 export const dynamic = "force-dynamic";
 
@@ -90,39 +91,34 @@ export default async function AdminRefundsPage({
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">单笔退款</h2>
           <form action="/api/admin/refunds" method="post" className="mt-5 space-y-4">
-            <div>
-              <label htmlFor="pledgeId" className="block text-sm font-medium text-slate-700">
-                赞助订单
-              </label>
-              <select
-                id="pledgeId"
-                name="pledgeId"
-                required
-                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-              >
-                <option value="">选择可退款订单</option>
-                {refundCenter.refundablePledges.map((pledge) => (
-                  <option key={pledge.id} value={pledge.id}>
-                    {pledge.merchantOrderNo} · {pledge.displayName} · {formatFenToYuan(pledge.netAmountFen)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="赞助订单"
+              id="pledgeId"
+              name="pledgeId"
+              required
+            >
+              <option value="">选择可退款订单</option>
+              {refundCenter.refundablePledges.map((pledge) => (
+                <option key={pledge.id} value={pledge.id}>
+                  {pledge.merchantOrderNo} · {pledge.displayName} · {formatFenToYuan(pledge.netAmountFen)}
+                </option>
+              ))}
+            </Select>
             <div className="grid gap-4 sm:grid-cols-2">
-              <input
+              <Input
                 name="amount"
                 type="number"
                 step="0.01"
                 min="0.01"
                 required
                 placeholder="退款金额"
-                className="rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+                aria-label="退款金额"
               />
-              <input
+              <Input
                 name="reason"
                 required
                 placeholder="退款原因"
-                className="rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+                aria-label="退款原因"
               />
             </div>
             <button
@@ -137,13 +133,13 @@ export default async function AdminRefundsPage({
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">结束众筹</h2>
           <form action="/api/admin/funding/close" method="post" className="mt-5 space-y-4">
-            <textarea
+            <Textarea
               name="closeReason"
               rows={4}
               required
               placeholder="关闭原因"
               disabled={Boolean(snapshot)}
-              className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
+              aria-label="关闭原因"
             />
             <button
               type="submit"

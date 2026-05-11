@@ -1,5 +1,6 @@
 import { getActiveTermsVersion } from "@/src/application/admin";
 import { getSummary } from "@/src/application/public";
+import { Input, Textarea } from "@/src/ui/components";
 
 export const dynamic = "force-dynamic";
 
@@ -41,49 +42,35 @@ export default async function SponsorPage({
       <form action="/api/sponsorship/orders" method="post" className="mt-12 space-y-8 rounded-2xl bg-white p-8 shadow-xl ring-1 ring-slate-200">
         <div className="space-y-6">
           {/* Amount Selection */}
-          <div>
-            <label htmlFor="amount" className="text-base font-semibold text-slate-900">赞助金额 (¥)</label>
-            <div className="mt-4">
-              <input
-                id="amount"
-                name="amount"
-                type="number"
-                step="0.01"
-                min="0.01"
-                defaultValue="10"
-                placeholder="10.00"
-                className="block w-full rounded-lg border-slate-200 py-3 text-slate-900 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm"
-              />
-            </div>
-          </div>
+          <Input
+            label="赞助金额 (¥)"
+            id="amount"
+            name="amount"
+            type="number"
+            step="0.01"
+            min="0.01"
+            defaultValue="10"
+            placeholder="10.00"
+            required
+          />
 
           {/* Nickname */}
-          <div>
-            <label htmlFor="nickname" className="block text-sm font-medium text-slate-700">展示昵称</label>
-            <div className="mt-1">
-              <input
-                type="text"
-                name="displayName"
-                id="nickname"
-                placeholder="匿名用户"
-                className="block w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm"
-              />
-            </div>
-          </div>
+          <Input
+            label="展示昵称"
+            type="text"
+            name="displayName"
+            id="nickname"
+            placeholder="匿名用户"
+          />
 
           {/* Message */}
-          <div>
-            <label htmlFor="message" className="block text-sm font-medium text-slate-700">留言 (可选)</label>
-            <div className="mt-1">
-              <textarea
-                id="message"
-                name="message"
-                rows={3}
-                placeholder="想对我们说点什么？"
-                className="block w-full rounded-lg border-slate-200 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm"
-              />
-            </div>
-          </div>
+          <Textarea
+            label="留言 (可选)"
+            id="message"
+            name="message"
+            rows={3}
+            placeholder="想对我们说点什么？"
+          />
 
           {/* Terms */}
           <div className="flex items-start">
@@ -92,6 +79,7 @@ export default async function SponsorPage({
                 id="terms"
                 name="termsAccepted"
                 type="checkbox"
+                required
                 className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
               />
             </div>

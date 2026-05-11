@@ -1,5 +1,6 @@
 import { getActiveTermsVersion, listTermsVersions } from "@/src/application/admin";
 import { requireAdminPageSession } from "@/src/infrastructure/auth/session";
+import { Input, Textarea } from "@/src/ui/components";
 
 export const dynamic = "force-dynamic";
 
@@ -74,43 +75,31 @@ export default async function AdminTermsPage({
         <h2 className="text-lg font-semibold text-slate-900">创建新草稿</h2>
         <form action="/api/admin/terms" method="post" className="mt-6 space-y-5">
           <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label htmlFor="version" className="block text-sm font-medium text-slate-700">
-                版本号
-              </label>
-              <input
-                id="version"
-                name="version"
-                type="text"
-                placeholder="例如 v1.2.0"
-                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-slate-700">
-                条款标题
-              </label>
-              <input
-                id="title"
-                name="title"
-                type="text"
-                placeholder="例如 众筹系统政策条款"
-                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="body" className="block text-sm font-medium text-slate-700">
-              条款正文
-            </label>
-            <textarea
-              id="body"
-              name="body"
-              rows={12}
-              placeholder="请按换行维护用户协议、隐私政策与退款说明正文。"
-              className="mt-1 block w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm leading-6 text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+            <Input
+              label="版本号"
+              id="version"
+              name="version"
+              type="text"
+              placeholder="例如 v1.2.0"
+              required
+            />
+            <Input
+              label="条款标题"
+              id="title"
+              name="title"
+              type="text"
+              placeholder="例如 众筹系统政策条款"
+              required
             />
           </div>
+          <Textarea
+            label="条款正文"
+            id="body"
+            name="body"
+            rows={12}
+            placeholder="请按换行维护用户协议、隐私政策与退款说明正文。"
+            required
+          />
           <button
             type="submit"
             className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"

@@ -2,6 +2,7 @@
 
 import type { FormEvent, ReactNode } from "react";
 import { useRef, useState } from "react";
+import { Input, Select } from "@/src/ui/components";
 
 type ExpenseEvidenceUploadFormProps = {
   action: string;
@@ -143,59 +144,51 @@ export function ExpenseEvidenceUploadForm({
         }
       >
         <div className={intent === "create" ? "md:col-span-2" : ""}>
-          <label
-            htmlFor={expenseId ? `evidence-file-${expenseId}` : "evidence-file-new"}
-            className="block text-sm font-medium text-slate-700"
-          >
-            上传凭证
-          </label>
-          <input
+          <Input
+            label="上传凭证"
             id={expenseId ? `evidence-file-${expenseId}` : "evidence-file-new"}
             name="evidenceFile"
             type="file"
             required={intent === "add-evidence"}
-            className="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white focus:border-blue-600 focus:outline-none"
+            className="py-1.5 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white"
           />
         </div>
         <div className={intent === "create" ? "" : "grid gap-3 sm:grid-cols-2"}>
-          <input
+          <Input
             aria-label="凭证标签"
             name="label"
             placeholder="凭证标签"
-            className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
           />
           {intent === "add-evidence" ? (
-            <input
+            <Input
               name="sortOrder"
               type="number"
               min="0"
               defaultValue={defaultSortOrder}
               aria-label="凭证排序"
-              className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
             />
           ) : null}
         </div>
         {intent === "create" ? (
-          <input
+          <Input
             name="sortOrder"
             type="number"
             min="0"
             defaultValue={defaultSortOrder}
             placeholder="排序"
             aria-label="凭证排序"
-            className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
           />
         ) : null}
         <div className={intent === "add-evidence" ? "grid gap-3 sm:grid-cols-2" : ""}>
-          <select
+          <Select
             name="visibility"
             defaultValue="PUBLIC"
             aria-label="凭证可见性"
-            className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-          >
-            <option value="PUBLIC">公开凭证</option>
-            <option value="AUDIT_ONLY">仅审计凭证</option>
-          </select>
+            options={[
+              { value: "PUBLIC", label: "公开凭证" },
+              { value: "AUDIT_ONLY", label: "仅审计凭证" },
+            ]}
+          />
           {intent === "add-evidence" ? (
             <button
               type="submit"

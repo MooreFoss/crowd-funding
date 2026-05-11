@@ -1,6 +1,7 @@
 import { listAdminPledges } from "@/src/application/admin";
 import { requireAdminPageSession } from "@/src/infrastructure/auth/session";
 import { formatFenToYuan, getStatusLabel } from "@/src/shared";
+import { Input, Textarea } from "@/src/ui/components";
 
 export const dynamic = "force-dynamic";
 
@@ -173,20 +174,20 @@ export default async function AdminPledgesPage({
                       <td className="w-80 px-5 py-4">
                         <form action="/api/admin/pledges" method="post" className="space-y-3">
                           <input type="hidden" name="id" value={pledge.id} />
-                          <input
+                          <Input
                             name="displayName"
                             defaultValue={pledge.displayName === "匿名用户" ? "" : pledge.displayName}
                             maxLength={20}
                             placeholder="匿名用户"
-                            className="block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+                            aria-label="昵称"
                           />
-                          <textarea
+                          <Textarea
                             name="message"
                             defaultValue={pledge.message}
                             maxLength={200}
                             rows={3}
                             placeholder="无留言"
-                            className="block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+                            aria-label="留言"
                           />
                           <button
                             type="submit"

@@ -1,6 +1,7 @@
 import { listAdminExpenses } from "@/src/application/admin";
 import { requireAdminPageSession } from "@/src/infrastructure/auth/session";
 import { formatFenToYuan } from "@/src/shared";
+import { Input, Select, Textarea } from "@/src/ui/components";
 
 import { ExpenseEvidenceUploadForm } from "./ExpenseEvidenceUploadForm";
 
@@ -63,58 +64,40 @@ export default async function AdminExpensesPage({
           submitClassName="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-slate-700">
-                支出项目
-              </label>
-              <input
-                id="title"
-                name="title"
-                required
-                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-slate-700">
-                支出金额
-              </label>
-              <input
-                id="amount"
-                name="amount"
-                type="number"
-                step="0.01"
-                min="0.01"
-                required
-                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-slate-700">
-              备注
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+            <Input
+              label="支出项目"
+              id="title"
+              name="title"
+              required
+            />
+            <Input
+              label="支出金额"
+              id="amount"
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
             />
           </div>
-          <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label htmlFor="detailVisibility" className="block text-sm font-medium text-slate-700">
-                详情可见性
-              </label>
-              <select
-                id="detailVisibility"
-                name="detailVisibility"
-                defaultValue="PUBLIC"
-                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-              >
-                <option value="PUBLIC">公开详情</option>
-                <option value="AUDIT_ONLY">仅审计详情</option>
-              </select>
-            </div>
+          <Textarea
+            label="备注"
+            id="description"
+            name="description"
+            rows={3}
+            containerClassName="mt-5"
+          />
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
+            <Select
+              label="详情可见性"
+              id="detailVisibility"
+              name="detailVisibility"
+              defaultValue="PUBLIC"
+              options={[
+                { value: "PUBLIC", label: "公开详情" },
+                { value: "AUDIT_ONLY", label: "仅审计详情" },
+              ]}
+            />
           </div>
         </ExpenseEvidenceUploadForm>
       </section>
@@ -147,31 +130,34 @@ export default async function AdminExpensesPage({
               <form action="/api/admin/expenses" method="post" className="mt-5 grid gap-4 lg:grid-cols-6">
                 <input type="hidden" name="intent" value="update-expense" />
                 <input type="hidden" name="id" value={expense.id} />
-                <input
+                <Input
                   name="title"
                   defaultValue={expense.title}
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none lg:col-span-2"
+                  containerClassName="lg:col-span-2"
+                  aria-label="支出项目"
                 />
-                <input
+                <Input
                   name="amount"
                   type="number"
                   step="0.01"
                   min="0.01"
                   defaultValue={(expense.amountFen / 100).toFixed(2)}
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+                  aria-label="支出金额"
                 />
-                <select
+                <Select
                   name="detailVisibility"
                   defaultValue={expense.detailVisibility}
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-                >
-                  <option value="PUBLIC">公开详情</option>
-                  <option value="AUDIT_ONLY">仅审计详情</option>
-                </select>
-                <input
+                  aria-label="详情可见性"
+                  options={[
+                    { value: "PUBLIC", label: "公开详情" },
+                    { value: "AUDIT_ONLY", label: "仅审计详情" },
+                  ]}
+                />
+                <Input
                   name="description"
                   defaultValue={expense.description}
-                  className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none lg:col-span-2"
+                  containerClassName="lg:col-span-2"
+                  aria-label="备注"
                 />
                 <button
                   type="submit"
@@ -225,27 +211,29 @@ export default async function AdminExpensesPage({
                           </span>
                         </div>
                         <div className="mt-3 grid gap-3 sm:grid-cols-4">
-                          <input
+                          <Input
                             name="label"
                             defaultValue={evidence.label ?? ""}
                             placeholder="标签"
-                            className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none sm:col-span-2"
+                            containerClassName="sm:col-span-2"
+                            aria-label="标签"
                           />
-                          <input
+                          <Input
                             name="sortOrder"
                             type="number"
                             min="0"
                             defaultValue={evidence.sortOrder}
-                            className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
+                            aria-label="排序"
                           />
-                          <select
+                          <Select
                             name="visibility"
                             defaultValue={evidence.visibility}
-                            className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-                          >
-                            <option value="PUBLIC">公开</option>
-                            <option value="AUDIT_ONLY">仅审计</option>
-                          </select>
+                            aria-label="可见性"
+                            options={[
+                              { value: "PUBLIC", label: "公开" },
+                              { value: "AUDIT_ONLY", label: "仅审计" },
+                            ]}
+                          />
                         </div>
                         <button
                           type="submit"

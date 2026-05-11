@@ -5,6 +5,7 @@ import { getSummary } from "@/src/application/public";
 import { listRefundCenter } from "@/src/application/refunds";
 import { getAdminSession } from "@/src/infrastructure/auth/session";
 import { formatFenToYuan, getStatusLabel } from "@/src/shared";
+import { Input } from "@/src/ui/components";
 
 export const dynamic = "force-dynamic";
 
@@ -52,36 +53,22 @@ export default async function AdminDashboardPage({
           ) : null}
 
           <form action="/api/admin/session" method="post" className="mt-8 space-y-5">
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-slate-700"
-              >
-                管理员账号
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-slate-700"
-              >
-                管理员密码
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                className="mt-1 block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none"
-              />
-            </div>
+            <Input
+              label="管理员账号"
+              id="username"
+              name="username"
+              type="text"
+              autoComplete="username"
+              required
+            />
+            <Input
+              label="管理员密码"
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+            />
             <button
               type="submit"
               className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
