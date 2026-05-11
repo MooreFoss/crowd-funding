@@ -100,12 +100,7 @@ function createTencentCloudAuthorization(input: {
   const secretSigning = hmacSha256(secretService, "tc3_request");
   const signature = hmacSha256(secretSigning, stringToSign, "hex");
 
-  return [
-    "TC3-HMAC-SHA256",
-    `Credential=${input.secretId}/${credentialScope}`,
-    `SignedHeaders=${signedHeaders}`,
-    `Signature=${signature}`,
-  ].join(", ");
+  return `TC3-HMAC-SHA256 Credential=${input.secretId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 }
 
 function mapTencentResponse(body: TencentTmsResponse): PublicTextModerationDecision {
@@ -200,6 +195,16 @@ export function createTencentTmsModerator(config: TencentTmsConfig): TextModerat
         });
         const body = (await response.json()) as TencentTmsResponse;
 
+        if (!response.ok || body.Response?.Error) {
+          console.error("[TMS] Request failed:", {
+            status: response.status,
+            requestId: body.Response?.RequestId,
+            errorCode: body.Response?.Error?.Code,
+            errorMessage: body.Response?.Error?.Message,
+            region: config.region,
+          });
+        }
+
         if (!response.ok) {
           return {
             status: "REVIEW_ERROR",
@@ -214,6 +219,7 @@ export function createTencentTmsModerator(config: TencentTmsConfig): TextModerat
 
         return mapTencentResponse(body);
       } catch (error) {
+        console.error("[TMS] Network error:", error);
         return {
           status: "REVIEW_ERROR",
           requestId: null,
