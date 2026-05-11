@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "db:migrate": "node scripts/migrate.mjs",
     "build": "next build",
     "start": "next start",
+    "start:prod": "pnpm db:migrate && next start",
     "lint": "eslint",
     "test:unit": "vitest run --config vitest.config.ts tests/unit --passWithNoTests",
     "test:integration": "vitest run --config vitest.config.ts tests/integration --passWithNoTests",

@@ -14,7 +14,19 @@ Leave `TENCENT_TMS_ENDPOINT` unset in production unless traffic is intentionally
 
 ## Database
 
-Run migrations in filename order before deploying app traffic:
+Run the production migration command before deploying app traffic:
+
+```bash
+pnpm db:migrate
+```
+
+The command applies migrations in filename order, records applied files in `schema_migrations`, verifies checksums, and uses a PostgreSQL advisory lock so concurrent deployment jobs do not execute the same migration at the same time. If the deployment platform only supports one process command, use:
+
+```bash
+pnpm start:prod
+```
+
+The current migration order is:
 
 1. `src/infrastructure/persistence/migrations/0001_core.sql`
 2. `src/infrastructure/persistence/migrations/0002_assets_and_moderation.sql`

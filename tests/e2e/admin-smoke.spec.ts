@@ -100,4 +100,24 @@ test.describe("admin smoke", () => {
       `DELETE FROM audit_logs WHERE action = 'ADMIN_LOGIN' AND actor_id = 'test-admin'`,
     );
   });
+
+  test("does not expose TMS configuration in admin settings", async ({ page }) => {
+    const response = await page.request.post("/api/admin/session", {
+      data: {
+        username: "test-admin",
+        password: "test-password",
+      },
+    });
+
+    expect(response.status()).toBe(200);
+    await page.goto("/admin/settings");
+    await expect(page.getByRole("heading", { name: "系统全局配置" })).toBeVisible();
+    await expect(page.getByText("内容安全与审核 (TMS)")).not.toBeVisible();
+    await expect(page.getByLabel("TMS 服务端点 (API Endpoint)")).not.toBeVisible();
+    await expect(page.getByLabel("TMS API 密钥")).not.toBeVisible();
+
+    await pool.query(
+      `DELETE FROM audit_logs WHERE action = 'ADMIN_LOGIN' AND actor_id = 'test-admin'`,
+    );
+  });
 });
