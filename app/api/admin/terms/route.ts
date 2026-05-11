@@ -7,6 +7,7 @@ import {
   publishTermsVersion,
 } from "@/src/application/admin";
 import { getAdminSessionFromRequest } from "@/src/infrastructure/auth/session";
+import { redirectToRequestHost } from "@/src/server/http/redirect";
 
 const createTermsSchema = z.object({
   version: z.string().trim().min(1),
@@ -71,10 +72,7 @@ export async function POST(request: Request) {
 
     if (!parsedPublish.success) {
       return kind === "form"
-        ? NextResponse.redirect(
-            new URL("/admin/terms?error=invalid-request", request.url),
-            303,
-          )
+        ? redirectToRequestHost(request, "/admin/terms?error=invalid-request")
         : NextResponse.json(
             {
               error: "Terms version id is required.",
@@ -88,7 +86,7 @@ export async function POST(request: Request) {
     });
 
     return kind === "form"
-      ? NextResponse.redirect(new URL("/admin/terms", request.url), 303)
+      ? redirectToRequestHost(request, "/admin/terms")
       : NextResponse.json(published);
   }
 
@@ -96,10 +94,7 @@ export async function POST(request: Request) {
 
   if (!parsedCreate.success) {
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL("/admin/terms?error=invalid-request", request.url),
-          303,
-        )
+      ? redirectToRequestHost(request, "/admin/terms?error=invalid-request")
       : NextResponse.json(
           {
             error: "Version, title, and body are required.",
@@ -114,7 +109,7 @@ export async function POST(request: Request) {
   });
 
   return kind === "form"
-    ? NextResponse.redirect(new URL("/admin/terms", request.url), 303)
+    ? redirectToRequestHost(request, "/admin/terms")
     : NextResponse.json(created, { status: 201 });
 }
 

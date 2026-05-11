@@ -2,7 +2,7 @@ import {
   getEditableSiteSettings,
 } from "@/src/application/admin";
 import { requireAdminPageSession } from "@/src/infrastructure/auth/session";
-import { Input } from "@/src/ui/components";
+import { Input, Textarea } from "@/src/ui/components";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,7 @@ export default async function SettingsPage({
       {error ? (
         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error === "invalid-request"
-            ? "请完整填写站点标题、图标地址和首页标题。"
+            ? "请完整填写站点标题、图标地址、首页标题和资金池描述。"
             : error}
         </div>
       ) : null}
@@ -68,6 +68,14 @@ export default async function SettingsPage({
               id="hero_title"
               name="heroTitle"
               defaultValue={settings.heroTitle}
+              required
+            />
+            <Textarea
+              label="资金池描述"
+              id="hero_description"
+              name="heroDescription"
+              defaultValue={settings.heroDescription}
+              rows={4}
               required
             />
           </div>

@@ -120,4 +120,45 @@ test.describe("admin smoke", () => {
       `DELETE FROM audit_logs WHERE action = 'ADMIN_LOGIN' AND actor_id = 'test-admin'`,
     );
   });
+
+  test("customizes public brand title, icon, and funding pool description", async ({
+    page,
+  }) => {
+    const response = await page.request.post("/api/admin/session", {
+      data: {
+        username: "test-admin",
+        password: "test-password",
+      },
+    });
+
+    expect(response.status()).toBe(200);
+
+    await page.goto("/admin/settings");
+    await page.getByLabel("网页标题 (Title)").fill("星火互助池 - 校友透明资助");
+    await page.getByLabel("站点图标 (Favicon URL)").fill("/window.svg");
+    await page.getByLabel("众筹核心标题 (首页大字)").fill("星火资金池");
+    await page
+      .getByLabel("资金池描述")
+      .fill("资金池收入、支出和余额会在确认后自动公开。");
+    await page.getByRole("button", { name: "保存配置" }).click();
+    await expect(page.getByText("系统配置已保存。")).toBeVisible();
+
+    await page.goto("/");
+    await expect(page).toHaveTitle("星火互助池 - 校友透明资助");
+    await expect(page.getByRole("link", { name: "星火互助池" }).first()).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "星火资金池" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("资金池收入、支出和余额会在确认后自动公开。"),
+    ).toBeVisible();
+    await expect(
+      page.getByText(`© ${new Date().getFullYear()} 星火互助池. All rights reserved.`),
+    ).toBeVisible();
+
+    await pool.query(
+      `DELETE FROM audit_logs WHERE action = 'ADMIN_LOGIN' AND actor_id = 'test-admin'`,
+    );
+    await pool.query(`DELETE FROM system_settings`);
+  });
 });

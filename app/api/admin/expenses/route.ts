@@ -9,6 +9,7 @@ import {
   updateAdminExpenseEvidence,
 } from "@/src/application/admin";
 import { getAdminSessionFromRequest } from "@/src/infrastructure/auth/session";
+import { redirectToRequestHost } from "@/src/server/http/redirect";
 
 const visibilitySchema = z.enum(["PUBLIC", "AUDIT_ONLY"]);
 
@@ -70,9 +71,9 @@ function createUnauthorizedResponse() {
 }
 
 function redirectWithError(request: Request, message: string) {
-  return NextResponse.redirect(
-    new URL(`/admin/expenses?error=${encodeURIComponent(message)}`, request.url),
-    303,
+  return redirectToRequestHost(
+    request,
+    `/admin/expenses?error=${encodeURIComponent(message)}`,
   );
 }
 
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
       });
 
       return kind === "form"
-        ? NextResponse.redirect(new URL("/admin/expenses", request.url), 303)
+        ? redirectToRequestHost(request, "/admin/expenses")
         : NextResponse.json(created, { status: 201 });
     }
 
@@ -133,7 +134,7 @@ export async function POST(request: Request) {
       const updated = await updateAdminExpenseEvidence(parsed);
 
       return kind === "form"
-        ? NextResponse.redirect(new URL("/admin/expenses", request.url), 303)
+        ? redirectToRequestHost(request, "/admin/expenses")
         : NextResponse.json(updated);
     }
 
@@ -145,7 +146,7 @@ export async function POST(request: Request) {
       const updated = await updateAdminExpense(parsed);
 
       return kind === "form"
-        ? NextResponse.redirect(new URL("/admin/expenses", request.url), 303)
+        ? redirectToRequestHost(request, "/admin/expenses")
         : NextResponse.json(updated);
     }
 
@@ -162,7 +163,7 @@ export async function POST(request: Request) {
     });
 
     return kind === "form"
-      ? NextResponse.redirect(new URL("/admin/expenses", request.url), 303)
+      ? redirectToRequestHost(request, "/admin/expenses")
       : NextResponse.json(created, { status: 201 });
   } catch (error) {
     const message =

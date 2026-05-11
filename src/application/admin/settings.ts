@@ -12,12 +12,14 @@ export type EditableSiteSettings = {
   siteTitle: string;
   faviconUrl: string;
   heroTitle: string;
+  heroDescription: string;
 };
 
 export const DEFAULT_EDITABLE_SITE_SETTINGS: EditableSiteSettings = {
   siteTitle: "众筹系统 - 透明可追溯的资金管理平台",
   faviconUrl: "/favicon.ico",
   heroTitle: "资金池总览",
+  heroDescription: "当前众筹正常进行中，公开数据将随支付与支出实时更新。",
 };
 
 function resolveSettingsRepository(input?: SettingsRepositoriesInput) {
@@ -55,6 +57,7 @@ function normalizePathOrUrl(value: string) {
 function normalizeSettings(input: EditableSiteSettings): EditableSiteSettings {
   const siteTitle = input.siteTitle.trim();
   const heroTitle = input.heroTitle.trim();
+  const heroDescription = input.heroDescription.trim();
 
   if (!siteTitle) {
     throw new Error("Site title is required.");
@@ -64,10 +67,15 @@ function normalizeSettings(input: EditableSiteSettings): EditableSiteSettings {
     throw new Error("Hero title is required.");
   }
 
+  if (!heroDescription) {
+    throw new Error("Hero description is required.");
+  }
+
   return {
     siteTitle,
     faviconUrl: normalizePathOrUrl(input.faviconUrl),
     heroTitle,
+    heroDescription,
   };
 }
 
@@ -79,12 +87,15 @@ export async function getEditableSiteSettings(
     "site_title",
     "favicon_url",
     "hero_title",
+    "hero_description",
   ]);
 
   return {
     siteTitle: stored.site_title ?? DEFAULT_EDITABLE_SITE_SETTINGS.siteTitle,
     faviconUrl: stored.favicon_url ?? DEFAULT_EDITABLE_SITE_SETTINGS.faviconUrl,
     heroTitle: stored.hero_title ?? DEFAULT_EDITABLE_SITE_SETTINGS.heroTitle,
+    heroDescription:
+      stored.hero_description ?? DEFAULT_EDITABLE_SITE_SETTINGS.heroDescription,
   };
 }
 
@@ -111,6 +122,11 @@ export async function updateEditableSiteSettings(
     {
       key: "hero_title",
       value: normalized.heroTitle,
+      updatedBy: input.updatedBy,
+    },
+    {
+      key: "hero_description",
+      value: normalized.heroDescription,
       updatedBy: input.updatedBy,
     },
   ]);

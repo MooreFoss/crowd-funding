@@ -11,6 +11,7 @@ import {
   setAdminSessionCookie,
 } from "@/src/infrastructure/auth/session";
 import { logAuditEvent } from "@/src/infrastructure/audit";
+import { redirectToRequestHost } from "@/src/server/http/redirect";
 
 const loginSchema = z.object({
   username: z.string().trim().min(1),
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
   if (intent === "logout") {
     const response =
       kind === "form"
-        ? NextResponse.redirect(new URL("/admin", request.url), 303)
+        ? redirectToRequestHost(request, "/admin")
         : NextResponse.json({ authenticated: false, username: null });
 
     clearAdminSessionCookie(response);
@@ -60,10 +61,7 @@ export async function POST(request: Request) {
 
   if (!parsed.success) {
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL("/admin?error=invalid-request", request.url),
-          303,
-        )
+      ? redirectToRequestHost(request, "/admin?error=invalid-request")
       : NextResponse.json(
           {
             authenticated: false,
@@ -78,10 +76,7 @@ export async function POST(request: Request) {
 
   if (!authentication.authenticated || !authentication.username) {
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL("/admin?error=invalid-credentials", request.url),
-          303,
-        )
+      ? redirectToRequestHost(request, "/admin?error=invalid-credentials")
       : NextResponse.json(
           {
             authenticated: false,
@@ -94,7 +89,7 @@ export async function POST(request: Request) {
 
   const response =
     kind === "form"
-      ? NextResponse.redirect(new URL("/admin", request.url), 303)
+      ? redirectToRequestHost(request, "/admin")
       : NextResponse.json(authentication);
 
   setAdminSessionCookie(response, authentication.username);

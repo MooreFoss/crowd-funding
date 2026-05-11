@@ -376,6 +376,7 @@ describe("admin-session integration", () => {
           siteTitle: "测试众筹平台",
           faviconUrl: "/test-favicon.ico",
           heroTitle: "透明资金池",
+          heroDescription: "每一笔赞助和支出都会公开同步。",
         },
       }),
     );
@@ -385,17 +386,20 @@ describe("admin-session integration", () => {
       siteTitle: "测试众筹平台",
       faviconUrl: "/test-favicon.ico",
       heroTitle: "透明资金池",
+      heroDescription: "每一笔赞助和支出都会公开同步。",
     });
 
     const stored = await context.settings.getMany([
       "site_title",
       "favicon_url",
       "hero_title",
+      "hero_description",
     ]);
     expect(stored).toEqual({
       site_title: "测试众筹平台",
       favicon_url: "/test-favicon.ico",
       hero_title: "透明资金池",
+      hero_description: "每一笔赞助和支出都会公开同步。",
     });
 
     const readResponse = await getAdminSettings(
@@ -409,6 +413,7 @@ describe("admin-session integration", () => {
       siteTitle: "测试众筹平台",
       faviconUrl: "/test-favicon.ico",
       heroTitle: "透明资金池",
+      heroDescription: "每一笔赞助和支出都会公开同步。",
     });
   });
 });

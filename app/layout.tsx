@@ -14,26 +14,30 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: settings.siteTitle,
-    description: "查看资金池余额、众筹记录与支出明细，支持在线赞助。",
+    description: settings.heroDescription,
     icons: {
       icon: settings.faviconUrl,
     },
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getEditableSiteSettings().catch(
+    () => DEFAULT_EDITABLE_SITE_SETTINGS,
+  );
+
   return (
     <html lang="zh-CN" className="h-full">
       <body className="antialiased bg-slate-50 text-slate-900 min-h-full flex flex-col font-sans">
-        <Navbar />
+        <Navbar siteTitle={settings.siteTitle} faviconUrl={settings.faviconUrl} />
         <main className="flex-grow">
           {children}
         </main>
-        <Footer />
+        <Footer siteTitle={settings.siteTitle} faviconUrl={settings.faviconUrl} />
       </body>
     </html>
   );

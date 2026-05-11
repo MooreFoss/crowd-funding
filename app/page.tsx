@@ -26,6 +26,10 @@ export default async function HomePage() {
     getEditableSiteSettings(),
   ]);
   const campaignStatusLabel = getStatusLabel(summary.campaignStatus);
+  const heroDescription =
+    summary.campaignStatus === "ACTIVE"
+      ? settings.heroDescription
+      : getCampaignStatusMessage(summary.campaignStatus);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -40,7 +44,7 @@ export default async function HomePage() {
                 {settings.heroTitle}
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                {getCampaignStatusMessage(summary.campaignStatus)}
+                {heroDescription}
               </p>
             </div>
             <div>

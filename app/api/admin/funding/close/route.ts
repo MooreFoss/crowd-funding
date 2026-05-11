@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { closeCampaign } from "@/src/application/refunds";
 import { getAdminSessionFromRequest } from "@/src/infrastructure/auth/session";
+import { redirectToRequestHost } from "@/src/server/http/redirect";
 
 const closeSchema = z.object({
   closeReason: z.string().trim().min(1),
@@ -34,10 +35,7 @@ export async function POST(request: Request) {
           },
           { status: 400 },
         )
-      : NextResponse.redirect(
-          new URL("/admin/refunds?error=close-reason-required", request.url),
-          303,
-        );
+      : redirectToRequestHost(request, "/admin/refunds?error=close-reason-required");
   }
 
   const state = await closeCampaign({
@@ -47,5 +45,5 @@ export async function POST(request: Request) {
 
   return contentType.includes("application/json")
     ? NextResponse.json(state)
-    : NextResponse.redirect(new URL("/admin/refunds", request.url), 303);
+    : redirectToRequestHost(request, "/admin/refunds");
 }

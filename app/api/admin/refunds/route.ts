@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { createSingleRefund, listRefundCenter } from "@/src/application/refunds";
 import { getAdminSessionFromRequest } from "@/src/infrastructure/auth/session";
+import { redirectToRequestHost } from "@/src/server/http/redirect";
 
 const createRefundSchema = z.object({
   pledgeId: z.string().trim().min(1),
@@ -59,10 +60,7 @@ export async function POST(request: Request) {
 
   if (!parsed.success) {
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL("/admin/refunds?error=invalid-request", request.url),
-          303,
-        )
+      ? redirectToRequestHost(request, "/admin/refunds?error=invalid-request")
       : NextResponse.json(
           {
             error: "Pledge, amount, and reason are required.",
@@ -78,16 +76,16 @@ export async function POST(request: Request) {
     });
 
     return kind === "form"
-      ? NextResponse.redirect(new URL("/admin/refunds", request.url), 303)
+      ? redirectToRequestHost(request, "/admin/refunds")
       : NextResponse.json(refund, { status: 201 });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to create refund.";
 
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL(`/admin/refunds?error=${encodeURIComponent(message)}`, request.url),
-          303,
+      ? redirectToRequestHost(
+          request,
+          `/admin/refunds?error=${encodeURIComponent(message)}`,
         )
       : NextResponse.json(
           {

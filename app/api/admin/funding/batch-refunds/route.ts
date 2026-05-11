@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createBatchRefund } from "@/src/application/refunds";
 import { getAdminSessionFromRequest } from "@/src/infrastructure/auth/session";
+import { redirectToRequestHost } from "@/src/server/http/redirect";
 
 export async function POST(request: Request) {
   const session = getAdminSessionFromRequest(request);
@@ -22,5 +23,5 @@ export async function POST(request: Request) {
 
   return contentType.includes("application/json")
     ? NextResponse.json(result, { status: 201 })
-    : NextResponse.redirect(new URL("/admin/refunds", request.url), 303);
+    : redirectToRequestHost(request, "/admin/refunds");
 }

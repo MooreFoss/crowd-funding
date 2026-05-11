@@ -6,6 +6,7 @@ import {
   reviewEditedPledgeText,
 } from "@/src/application/admin";
 import { getAdminSessionFromRequest } from "@/src/infrastructure/auth/session";
+import { redirectToRequestHost } from "@/src/server/http/redirect";
 
 const editPledgeSchema = z.object({
   id: z.string().trim().min(1),
@@ -73,10 +74,7 @@ export async function PATCH(request: Request) {
 
   if (!parsed.success) {
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL("/admin/pledges?error=invalid-request", request.url),
-          303,
-        )
+      ? redirectToRequestHost(request, "/admin/pledges?error=invalid-request")
       : NextResponse.json(
           {
             error: "Pledge id, display name, and message are required.",
@@ -97,16 +95,16 @@ export async function PATCH(request: Request) {
     });
 
     return kind === "form"
-      ? NextResponse.redirect(new URL("/admin/pledges", request.url), 303)
+      ? redirectToRequestHost(request, "/admin/pledges")
       : NextResponse.json(updated);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to update pledge text.";
 
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL(`/admin/pledges?error=${encodeURIComponent(message)}`, request.url),
-          303,
+      ? redirectToRequestHost(
+          request,
+          `/admin/pledges?error=${encodeURIComponent(message)}`,
         )
       : NextResponse.json(
           {

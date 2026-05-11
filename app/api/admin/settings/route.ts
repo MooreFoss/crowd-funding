@@ -6,11 +6,13 @@ import {
   updateEditableSiteSettings,
 } from "@/src/application/admin";
 import { getAdminSessionFromRequest } from "@/src/infrastructure/auth/session";
+import { redirectToRequestHost } from "@/src/server/http/redirect";
 
 const settingsSchema = z.object({
   siteTitle: z.string().trim().min(1),
   faviconUrl: z.string().trim().min(1),
   heroTitle: z.string().trim().min(1),
+  heroDescription: z.string().trim().min(1),
 });
 
 async function readRequestPayload(request: Request) {
@@ -62,13 +64,11 @@ export async function POST(request: Request) {
 
   if (!parsed.success) {
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL("/admin/settings?error=invalid-request", request.url),
-          303,
-        )
+      ? redirectToRequestHost(request, "/admin/settings?error=invalid-request")
       : NextResponse.json(
           {
-            error: "Site title, favicon URL, and hero title are required.",
+            error:
+              "Site title, favicon URL, hero title, and hero description are required.",
           },
           { status: 400 },
         );
@@ -81,16 +81,16 @@ export async function POST(request: Request) {
     });
 
     return kind === "form"
-      ? NextResponse.redirect(new URL("/admin/settings?saved=1", request.url), 303)
+      ? redirectToRequestHost(request, "/admin/settings?saved=1")
       : NextResponse.json(settings);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to update settings.";
 
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL(`/admin/settings?error=${encodeURIComponent(message)}`, request.url),
-          303,
+      ? redirectToRequestHost(
+          request,
+          `/admin/settings?error=${encodeURIComponent(message)}`,
         )
       : NextResponse.json(
           {

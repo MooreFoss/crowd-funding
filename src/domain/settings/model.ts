@@ -1,4 +1,8 @@
-export type SystemSettingKey = "site_title" | "favicon_url" | "hero_title";
+export type SystemSettingKey =
+  | "site_title"
+  | "favicon_url"
+  | "hero_title"
+  | "hero_description";
 
 export type SystemSettingRecord = {
   key: SystemSettingKey;

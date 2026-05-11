@@ -8,6 +8,7 @@ import {
   LAST_SPONSOR_ORDER_COOKIE_NAME,
   SPONSOR_USER_KEY_COOKIE_NAME,
 } from "@/src/application/payments";
+import { redirectToRequestHost } from "@/src/server/http/redirect";
 
 function parseCookieHeader(cookieHeader: string | null) {
   if (!cookieHeader) {
@@ -132,9 +133,9 @@ export async function POST(request: Request) {
       error instanceof Error ? error.message : "Failed to create sponsor order.";
 
     return kind === "form"
-      ? NextResponse.redirect(
-          new URL(`/sponsor?error=${encodeURIComponent(message)}`, request.url),
-          303,
+      ? redirectToRequestHost(
+          request,
+          `/sponsor?error=${encodeURIComponent(message)}`,
         )
       : NextResponse.json(
           {

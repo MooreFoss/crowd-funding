@@ -1,15 +1,36 @@
 import Link from "next/link";
 
-export default function Navbar() {
+type NavbarProps = {
+  siteTitle: string;
+  faviconUrl: string;
+};
+
+function getBrandName(siteTitle: string) {
+  return siteTitle.split("-")[0]?.trim() || siteTitle;
+}
+
+function getIconBackgroundImage(faviconUrl: string) {
+  return `url(${JSON.stringify(faviconUrl)})`;
+}
+
+export default function Navbar({ siteTitle, faviconUrl }: NavbarProps) {
+  const brandName = getBrandName(siteTitle);
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">众</span>
-            </div>
-            <span className="text-xl font-bold text-slate-900 tracking-tight">众筹系统</span>
+            <span
+              aria-hidden="true"
+              className="size-8 rounded-lg bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: getIconBackgroundImage(faviconUrl),
+              }}
+            />
+            <span className="text-xl font-bold text-slate-900 tracking-tight">
+              {brandName}
+            </span>
           </Link>
           
           <div className="hidden md:flex items-center gap-6">
