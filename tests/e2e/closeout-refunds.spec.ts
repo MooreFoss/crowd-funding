@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { Pool } from "pg";
 
+const ADMIN_SESSION_COOKIE_NAME = "cf_admin_session";
+
 function parseEnvFile(filePath: string) {
   if (!existsSync(filePath)) {
     return {};
@@ -77,6 +79,17 @@ async function login(page: import("@playwright/test").Page) {
   expect(response.status()).toBe(200);
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "管理控制台概览" })).toBeVisible();
+
+  const cookies = await page.context().cookies();
+  const sessionCookie = cookies.find(
+    (cookie) => cookie.name === ADMIN_SESSION_COOKIE_NAME,
+  );
+
+  if (!sessionCookie) {
+    throw new Error("Admin session cookie was not set.");
+  }
+
+  return `${sessionCookie.name}=${sessionCookie.value}`;
 }
 
 test.describe("campaign closeout refunds", () => {
@@ -126,11 +139,14 @@ test.describe("campaign closeout refunds", () => {
     );
 
     try {
-      await login(page);
+      const adminCookie = await login(page);
       await page.goto("/admin/refunds");
       await expect(page.getByText("进行中")).toBeVisible();
 
       const closeResponse = await page.request.post("/api/admin/funding/close", {
+        headers: {
+          cookie: adminCookie,
+        },
         data: {
           closeReason: `${prefix} close reason`,
         },
@@ -142,6 +158,9 @@ test.describe("campaign closeout refunds", () => {
       await expect(page.getByText("¥ 100.00")).toBeVisible();
 
       const batchResponse = await page.request.post("/api/admin/funding/batch-refunds", {
+        headers: {
+          cookie: adminCookie,
+        },
         data: {},
       });
 

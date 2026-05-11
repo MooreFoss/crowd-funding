@@ -244,7 +244,7 @@ test.describe("expense evidence", () => {
         page.getByRole("img", { name: `${prefix} Public receipt` }),
       ).toBeVisible();
       await expect(page.getByRole("img")).toHaveCount(1);
-      await expect(page.getByText(`${prefix} PDF invoice`)).toBeVisible();
+      await expect(page.getByText(`${prefix} PDF invoice`).first()).toBeVisible();
       await expect(page.getByRole("link", { name: /PDF invoice/ })).toHaveAttribute(
         "href",
         publicFileUrl,

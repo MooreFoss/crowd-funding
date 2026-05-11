@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { generateKeyPairSync } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { createServer } from "node:http";
 import { join } from "node:path";
@@ -67,27 +68,71 @@ function withSchemaSearchPath(databaseUrl, schema) {
   return connection.toString();
 }
 
-function createPlaywrightZpayStubServer() {
+function ensurePlaywrightWechatPayKeys() {
+  const secretDirectory = join(process.cwd(), ".tmp", "playwright-secrets");
+  const merchantPrivateKeyPath =
+    process.env.WECHAT_PAY_MERCHANT_PRIVATE_KEY_PATH ??
+    join(secretDirectory, "apiclient_key.pem");
+  const wechatPayPublicKeyPath =
+    process.env.WECHAT_PAY_PUBLIC_KEY_PATH ??
+    join(secretDirectory, "wechatpay_public.pem");
+
+  if (existsSync(merchantPrivateKeyPath) && existsSync(wechatPayPublicKeyPath)) {
+    return;
+  }
+
+  const merchantKeys = generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    privateKeyEncoding: {
+      format: "pem",
+      type: "pkcs8",
+    },
+    publicKeyEncoding: {
+      format: "pem",
+      type: "spki",
+    },
+  });
+  const wechatPayKeys = generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    privateKeyEncoding: {
+      format: "pem",
+      type: "pkcs8",
+    },
+    publicKeyEncoding: {
+      format: "pem",
+      type: "spki",
+    },
+  });
+
+  mkdirSync(secretDirectory, { recursive: true });
+  writeFileSync(merchantPrivateKeyPath, merchantKeys.privateKey);
+  writeFileSync(wechatPayPublicKeyPath, wechatPayKeys.publicKey);
+}
+
+function createPlaywrightWechatPayStubServer() {
   const orders = new Map();
   const refunds = new Map();
   const host = "127.0.0.1";
-  const port = Number(process.env.PLAYWRIGHT_ZPAY_STUB_PORT ?? 3100);
+  const port = Number(process.env.PLAYWRIGHT_WECHATPAY_STUB_PORT ?? 3100);
 
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? "/", `http://${host}:${port}`);
 
-    if (request.method === "POST" && url.pathname === "/mapi.php") {
+    if (
+      request.method === "POST" &&
+      (url.pathname === "/v3/pay/transactions/native" ||
+        url.pathname === "/v3/pay/transactions/jsapi")
+    ) {
       let body = "";
 
       request.on("data", (chunk) => {
         body += chunk.toString("utf8");
       });
       request.on("end", () => {
-        const formData = new URLSearchParams(body);
-        const merchantOrderNo = formData.get("out_trade_no");
-        const returnUrl = formData.get("return_url");
+        const parsed = body ? JSON.parse(body) : {};
+        const merchantOrderNo = parsed.out_trade_no;
 
-        if (!merchantOrderNo || !returnUrl) {
+        if (!merchantOrderNo) {
           response.writeHead(400, {
             "content-type": "application/json",
           });
@@ -95,36 +140,57 @@ function createPlaywrightZpayStubServer() {
           return;
         }
 
-        const tradeNo = `ZPAY-${merchantOrderNo}`;
+        const tradeNo = `WX-${merchantOrderNo}`;
         orders.set(merchantOrderNo, {
           tradeNo,
-          paid: false,
+          paid: true,
         });
 
         response.writeHead(200, {
           "content-type": "application/json",
         });
-        response.end(
-          JSON.stringify({
-            code: 1,
-            msg: "success",
-            trade_no: tradeNo,
-            payurl2: `http://${host}:${port}/cashier?out_trade_no=${encodeURIComponent(merchantOrderNo)}&return_url=${encodeURIComponent(returnUrl)}`,
-          }),
-        );
+        response.end(JSON.stringify(
+          url.pathname.endsWith("/jsapi")
+            ? { prepay_id: `prepay-${merchantOrderNo}` }
+            : { code_url: `weixin://wxpay/bizpayurl?pr=${encodeURIComponent(merchantOrderNo)}` },
+        ));
       });
       return;
     }
 
-    if (request.method === "GET" && url.pathname === "/api.php") {
-      if (url.searchParams.get("act") === "refund") {
-        const merchantRefundNo = url.searchParams.get("refund_no");
-        const merchantOrderNo = url.searchParams.get("out_trade_no");
+    if (request.method === "GET" && url.pathname.startsWith("/v3/pay/transactions/out-trade-no/")) {
+      const merchantOrderNo = decodeURIComponent(
+        url.pathname.split("/").at(-1) ?? "",
+      );
+      const order = merchantOrderNo ? orders.get(merchantOrderNo) : null;
+
+      response.writeHead(200, {
+        "content-type": "application/json",
+      });
+      response.end(
+        JSON.stringify({
+          transaction_id: order?.tradeNo ?? `WX-${merchantOrderNo}`,
+          out_trade_no: merchantOrderNo,
+          trade_state: order?.paid ? "SUCCESS" : "NOTPAY",
+        }),
+      );
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/v3/refund/domestic/refunds") {
+      let body = "";
+
+      request.on("data", (chunk) => {
+        body += chunk.toString("utf8");
+      });
+      request.on("end", () => {
+        const parsed = body ? JSON.parse(body) : {};
+        const merchantRefundNo = parsed.out_refund_no;
 
         if (merchantRefundNo) {
           refunds.set(merchantRefundNo, {
-            merchantOrderNo,
-            providerRefundNo: `ZPAY-REFUND-${merchantRefundNo}`,
+            merchantOrderNo: parsed.out_trade_no,
+            providerRefundNo: `WX-REFUND-${merchantRefundNo}`,
           });
         }
 
@@ -133,62 +199,14 @@ function createPlaywrightZpayStubServer() {
         });
         response.end(
           JSON.stringify({
-            code: 1,
-            msg: "success",
-            refund_no: merchantRefundNo
-              ? `ZPAY-REFUND-${merchantRefundNo}`
+            refund_id: merchantRefundNo
+              ? `WX-REFUND-${merchantRefundNo}`
               : null,
+            out_refund_no: merchantRefundNo,
+            status: "PROCESSING",
           }),
         );
-        return;
-      }
-
-      const merchantOrderNo = url.searchParams.get("out_trade_no");
-      const order = merchantOrderNo ? orders.get(merchantOrderNo) : null;
-
-      response.writeHead(200, {
-        "content-type": "application/json",
       });
-      response.end(
-        JSON.stringify({
-          code: 1,
-          msg: "success",
-          trade_no: order?.tradeNo ?? null,
-          out_trade_no: merchantOrderNo,
-          status: order?.paid ? 1 : 0,
-        }),
-      );
-      return;
-    }
-
-    if (request.method === "GET" && url.pathname === "/cashier") {
-      const merchantOrderNo = url.searchParams.get("out_trade_no");
-      const returnUrl = url.searchParams.get("return_url");
-
-      if (merchantOrderNo && orders.has(merchantOrderNo)) {
-        const order = orders.get(merchantOrderNo);
-        order.paid = true;
-        orders.set(merchantOrderNo, order);
-      }
-
-      response.writeHead(200, {
-        "content-type": "text/html; charset=utf-8",
-      });
-      response.end(`<!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <title>ZPAY Stub</title>
-  </head>
-  <body>
-    <p>模拟微信 H5 收银台，正在返回应用...</p>
-    <script>
-      setTimeout(function () {
-        window.location.href = ${JSON.stringify(returnUrl ?? "http://127.0.0.1:3000/payment/return")};
-      }, 500);
-    </script>
-  </body>
-</html>`);
       return;
     }
 
@@ -288,25 +306,28 @@ async function applyMigrations() {
 async function main() {
   const databaseUrl = readDatabaseUrl();
   const schema = readDatabaseSchema();
-  const zpayServer = await createPlaywrightZpayStubServer();
+  ensurePlaywrightWechatPayKeys();
+  const wechatPayServer = await createPlaywrightWechatPayStubServer();
   const tmsServer = await createPlaywrightTmsStubServer();
   await applyMigrations();
   const isWindows = process.platform === "win32";
   const command = isWindows ? "cmd.exe" : "pnpm";
   const nextPort = process.env.PLAYWRIGHT_NEXT_PORT ?? "3000";
+  const nextCommand =
+    process.env.PLAYWRIGHT_NEXT_MODE === "start" ? "start" : "dev";
   const args = isWindows
     ? [
         "/c",
         "pnpm",
         "exec",
         "next",
-        "dev",
+        nextCommand,
         "--hostname",
         "127.0.0.1",
         "--port",
         nextPort,
       ]
-    : ["exec", "next", "dev", "--hostname", "127.0.0.1", "--port", nextPort];
+    : ["exec", "next", nextCommand, "--hostname", "127.0.0.1", "--port", nextPort];
 
   const child = spawn(
     command,
@@ -327,7 +348,7 @@ async function main() {
   process.on("SIGINT", () => child.kill("SIGINT"));
   process.on("SIGTERM", () => child.kill("SIGTERM"));
   child.on("exit", (code) => {
-    zpayServer.close();
+    wechatPayServer.close();
     tmsServer.close();
     process.exit(code ?? 0);
   });
